@@ -386,10 +386,19 @@ function showTab(tab){
   document.querySelector('.mpbody').scrollTop=0;
 }
 
+var SIDEBAR_ORDER=['M1','M2','M3','M4','MA','MC','ME','MF','MG','MH','M6','M7','MD','M5','M8','M9','MB','MI'];
+var SIDEBAR_GROUPS={'M1':'Architecture & Stockage','M2':'Architecture & Stockage','M3':'Architecture & Stockage','M4':'SOFS','MA':'SOFS','MC':'S3 Connector & Services','ME':'S3 Connector & Services','MF':'S3 Connector & Services','MG':'S3 Connector & Services','MH':'S3 Connector & Services','M6':'Disques & Maintenance','M7':'Disques & Maintenance','MD':'Disques & Maintenance','M5':'Opérations','M8':'Opérations','M9':'Opérations','MB':'Opérations','MI':'Opérations'};
+
 function renderSidebar(){
   var nav=document.getElementById('sbNav');
-  var html='<div class="nav-sec">Modules de cours</div>';
-  MODS.forEach(function(m,i){
+  var html='';
+  var lastGrp='';
+  SIDEBAR_ORDER.forEach(function(id){
+    var i=MODS.findIndex(function(m){return m.id===id;});
+    if(i===-1)return;
+    var m=MODS[i];
+    var grp=SIDEBAR_GROUPS[id]||'';
+    if(grp!==lastGrp){lastGrp=grp;html+='<div class="nav-sec">'+grp+'</div>';}
     var sc=state.scores[m.id];
     var isDone=sc&&sc.score===sc.total;
     var isPartial=sc&&sc.score<sc.total;
