@@ -125,6 +125,16 @@ pre code{background:none;padding:0;color:inherit}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
+.gloss-alpha{display:flex;flex-wrap:wrap;gap:5px;padding:13px 36px;border-bottom:1px solid var(--bdr);background:var(--bg2);position:sticky;top:0;z-index:5}
+.gl-al{padding:3px 9px;border-radius:5px;background:var(--bg3);border:1px solid var(--bdr);color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;user-select:none}
+.gl-al:hover{border-color:var(--acc);color:var(--acc)}
+.gloss-lhdr{font-size:20px;font-weight:800;color:var(--acc);padding:22px 36px 8px;border-bottom:1px solid var(--bdr);scroll-margin-top:56px}
+.gloss-entry{padding:13px 36px 15px;border-bottom:1px solid rgba(45,51,70,.5);transition:background .15s}
+.gloss-entry:hover{background:rgba(255,255,255,.02)}
+.gl-term{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px}
+.gl-def{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:5px}
+.gl-ref{font-size:11.5px;color:var(--acc);cursor:pointer;font-weight:600}
+.gl-ref:hover{color:var(--acc2);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -166,6 +176,18 @@ pre code{background:none;padding:0;color:inherit}
     <div class="mpbody">
       <div class="theory" id="theoryView"></div>
       <div class="quiz" id="quizView"></div>
+    </div>
+  </div>
+  <div class="mp" id="glossaryPage">
+    <div class="mphdr">
+      <button class="backbtn" onclick="goHome()">&#8592; Accueil</button>
+      <div class="mphdr-info">
+        <div class="mph-id">REFERENCE</div>
+        <div class="mph-title">Glossaire des termes Scality RING</div>
+      </div>
+    </div>
+    <div class="mpbody">
+      <div class="theory show" id="glossBody"></div>
     </div>
   </div>
 </main>
@@ -365,6 +387,7 @@ function goHome(){
   state.view='home';
   document.getElementById('homePage').classList.add('show');
   document.getElementById('modulePage').classList.remove('show');
+  document.getElementById('glossaryPage').classList.remove('show');
   renderHome();renderSidebar();
 }
 
@@ -373,8 +396,9 @@ function openModule(idx){
   if(!state.answers[MODS[idx].id])state.answers[MODS[idx].id]=new Array(MODS[idx].quiz.length).fill(-1);
   document.getElementById('homePage').classList.remove('show');
   document.getElementById('modulePage').classList.add('show');
+  document.getElementById('glossaryPage').classList.remove('show');
   renderModule();renderSidebar();
-  document.querySelector('.mpbody').scrollTop=0;
+  document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
 function showTab(tab){
@@ -383,7 +407,7 @@ function showTab(tab){
   document.getElementById('tabQuiz').classList.toggle('active',tab==='quiz');
   document.getElementById('theoryView').classList.toggle('show',tab==='theory');
   document.getElementById('quizView').classList.toggle('show',tab==='quiz');
-  document.querySelector('.mpbody').scrollTop=0;
+  document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
 var SIDEBAR_ORDER=['M1','M2','M3','M4','M7','MA','MC','MF','MH','ME','MG','M5','M6','M8','MD','M9','MB','MI'];
@@ -407,6 +431,8 @@ function renderSidebar(){
     var cls=['ni',isActive?'active':'',isDone?'done':'',isPartial?'partial':''].filter(Boolean).join(' ');
     html+='<div class="'+cls+'" onclick="openModule('+i+')"><span class="nid">'+m.num+'</span><span class="ntxt">'+m.title+'</span>'+badge+'</div>';
   });
+  html+='<div class="nav-sec">Référence</div>';
+  html+='<div class="ni'+(state.view==='glossary'?' active':'')+'" onclick="openGlossary()"><span class="nid">GL</span><span class="ntxt">Glossaire</span></div>';
   nav.innerHTML=html;
   var done=Object.keys(state.scores).length;
   var totalScore=Object.values(state.scores).reduce(function(a,b){return a+b.score;},0);
@@ -510,6 +536,134 @@ function resetQuiz(){
   delete state.scores[m.id];
   state.answers[m.id]=new Array(m.quiz.length).fill(-1);
   save();renderQuiz();renderSidebar();
+}
+
+var GLOSSARY=[
+  {term:'ARC',def:'Adaptive Ring Coding — schéma d\'erasure coding propriétaire Scality stockant des fragments de données sur plusieurs nœuds pour tolérer les pannes. Remplace la réplication classique avec une meilleure efficacité de stockage.',refs:['M2','M4']},
+  {term:'ARC_REBUILD_NOK',def:'Alarme indiquant qu\'un rebuild d\'objet en mode ARC a échoué. Le fragment corrompu ou manquant n\'a pas pu être reconstruit à partir des fragments survivants.',refs:['M5']},
+  {term:'AlertManager',def:'Composant Prometheus gérant le routage et la déduplication des alertes. Reçoit les alertes de Prometheus et les envoie vers les destinations configurées (email, PagerDuty, Slack).',refs:['M5']},
+  {term:'Backbeat',def:'Moteur de réplication asynchrone de Scality. Traite les tâches CRR, Lifecycle, Replication Metrics et autres workflows en arrière-plan via des queues Kafka.',refs:['ME','MG']},
+  {term:'Balance',def:'Processus d\'équilibrage de la charge des données entre les disques et nœuds d\'un ring. Déclenché automatiquement lors de l\'ajout ou du retrait d\'un nœud.',refs:['M4','MD']},
+  {term:'Biziod',def:'Daemon d\'I/O bas niveau s\'exécutant sur chaque nœud de stockage. Gère les opérations de lecture/écriture sur les disques physiques pour le compte de sproxyd.',refs:['M2']},
+  {term:'Bizstorenode',def:'Service regroupant biziod et les composants de stockage local sur un nœud RING. Unité de déploiement gérée par Salt pour les nœuds DATA et META.',refs:['M2','M9']},
+  {term:'bseq',def:'Numéro de séquence de blob (blob sequence) — identifiant unique d\'une version d\'un objet sur le disque, utilisé par repd pour suivre les versions de données.',refs:['M2']},
+  {term:'bucketd',def:'Service Scality gérant les métadonnées des buckets S3 (liste des objets, ACL, versioning). Utilise LevelDB comme backend de stockage.',refs:['MC','MF']},
+  {term:'Chord',def:'Protocole d\'espace de clés distribué DHT utilisé par le RING pour répartir les objets entre nœuds selon leur hash. Détermine quels nœuds sont responsables de quels objets.',refs:['M1','M2']},
+  {term:'Chord Purge',def:'Opération de nettoyage des entrées orphelines dans l\'espace Chord. Supprime les références à des objets qui n\'existent plus physiquement.',refs:['M6','MD']},
+  {term:'Cloudserver',def:'Implémentation Scality du protocole S3 (équivalent d\'Amazon S3). Expose une API S3 compatible et s\'appuie sur sproxyd et bucketd pour le stockage.',refs:['MC','MF','MH']},
+  {term:'CONF_MISMATCH',def:'Alarme signalant une incohérence de configuration entre nœuds du ring. Peut indiquer une différence de version logicielle ou de paramètre de configuration.',refs:['M5']},
+  {term:'COS',def:'Class of Service — classe de stockage définissant les règles de protection des données (nombre de copies, schéma ARC, domaines de pannes) appliquées aux objets.',refs:['M2','M4']},
+  {term:'CRR',def:'Cross-Region Replication — réplication asynchrone des objets S3 entre deux sites ou deux buckets, orchestrée par Backbeat.',refs:['ME','MG']},
+  {term:'cseq',def:'Numéro de séquence de chunk — identifiant de la version logique d\'un objet dans le ring, incrémenté à chaque mise à jour.',refs:['M2']},
+  {term:'CTDB',def:'Clustered TDB — couche de métadonnées distribuée utilisée par Samba/SOFS pour partager les informations de sessions SMB entre les nœuds du cluster.',refs:['MA']},
+  {term:'DLM',def:'Distributed Lock Manager — gestionnaire de verrous distribués utilisé par SOFS pour coordonner les accès concurrents aux fichiers entre les nœuds du cluster.',refs:['MA']},
+  {term:'Disk Orphans',def:'Objets présents physiquement sur disque mais sans référence dans les métadonnées du ring. Détectés lors d\'un Chord Purge et éligibles à la suppression.',refs:['M6','MD']},
+  {term:'Erasure Coding',def:'Technique de protection des données découpant un objet en fragments de données et de parité. Permet de reconstruire l\'objet même si certains fragments sont perdus, avec moins d\'espace que la réplication N×.',refs:['M2','M4']},
+  {term:'Fail2ban',def:'Outil de sécurité analysant les logs pour détecter et bloquer automatiquement les adresses IP effectuant des tentatives d\'intrusion répétées.',refs:['MB']},
+  {term:'Failure Domain',def:'Unité de panne indépendante (nœud, rack, datacenter) utilisée par le COS pour garantir que les fragments d\'un même objet sont distribués sur des domaines distincts.',refs:['M2','M4']},
+  {term:'FUSE',def:'Filesystem in Userspace — interface noyau Linux permettant à sfused d\'exposer le système de fichiers SOFS en espace utilisateur sans module noyau dédié.',refs:['MA']},
+  {term:'GC',def:'Garbage Collector — processus de nettoyage supprimant les objets supprimés ou les versions obsolètes qui ne sont plus référencés dans les métadonnées.',refs:['M6','MD']},
+  {term:'Grafana',def:'Plateforme de visualisation de métriques. Affiche les tableaux de bord de monitoring du RING en interrogeant Prometheus/Thanos comme source de données.',refs:['M5']},
+  {term:'INCOMPLETE',def:'État d\'un objet dont tous les fragments n\'ont pas pu être écrits lors de l\'ingestion. L\'objet est présent mais dégradé ; un rebuild peut le compléter.',refs:['M5','M6']},
+  {term:'Kafka',def:'Plateforme de messagerie distribuée utilisée par Backbeat pour mettre en file d\'attente les événements de réplication, lifecycle et autres tâches asynchrones.',refs:['ME','MG']},
+  {term:'Keyspace',def:'Espace de clés du ring Chord — plage de valeurs de hash sur laquelle les objets sont distribués. Chaque nœud est responsable d\'une portion du keyspace.',refs:['M1','M2']},
+  {term:'KMIP',def:'Key Management Interoperability Protocol — protocole standard d\'interopérabilité pour les systèmes de gestion de clés de chiffrement, utilisé avec LUKS et NBDE.',refs:['MB']},
+  {term:'KMS',def:'Key Management Service — service de gestion des clés de chiffrement des données au repos. Intégré avec Vault pour le chiffrement côté serveur S3.',refs:['MB','MH']},
+  {term:'LACP',def:'Link Aggregation Control Protocol — protocole d\'agrégation de liens réseau (bonding) pour augmenter le débit et la redondance réseau des nœuds RING.',refs:['M9']},
+  {term:'Legal Hold',def:'Verrou légal sur un objet S3 empêchant toute suppression ou modification, indépendamment de la retention policy. Utilisé pour la préservation de preuves.',refs:['MH']},
+  {term:'LevelDB',def:'Base de données clé-valeur embarquée (Google) utilisée par bucketd et repd pour stocker les métadonnées localement sur chaque nœud.',refs:['MC','MF']},
+  {term:'Lifecycle Policy',def:'Règles S3 définissant le cycle de vie automatique des objets : transition vers un autre tier de stockage, expiration, suppression de versions non courantes.',refs:['MF','ME']},
+  {term:'LUKS',def:'Linux Unified Key Setup — standard de chiffrement de disque Linux. Utilisé pour chiffrer les disques des nœuds RING au repos (encryption at rest).',refs:['MB']},
+  {term:'MARS',def:'Module d\'Alarmes et de Remontée de Supervision — composant interne Scality collectant et normalisant les événements d\'alarme des nœuds pour les exposer à Prometheus.',refs:['M5']},
+  {term:'membershipd',def:'Daemon de gestion de l\'appartenance au ring. Maintient la vue cohérente des membres actifs du cluster et orchestre les changements de topologie (nodeJoin/nodeLeave).',refs:['M2','MD']},
+  {term:'MESA',def:'Metadata Engine for Scality Architecture — couche de métadonnées distribuée du RING gérant l\'index des objets et leur localisation, stockée dans le ring META.',refs:['M2','M3']},
+  {term:'Mode Maintenance',def:'État d\'un nœud retiré temporairement du service actif pour maintenance. Les données sont rééquilibrées et le nœud ne reçoit plus de nouvelles écritures.',refs:['MD']},
+  {term:'NBDE',def:'Network-Bound Disk Encryption — mécanisme de déchiffrement automatique des disques LUKS au démarrage, conditionné à la disponibilité d\'un serveur Tang sur le réseau.',refs:['MB']},
+  {term:'nodeJoin',def:'Commande ringsh ajoutant un nœud au ring. Déclenche le rééquilibrage du keyspace et le transfert des données vers le nouveau nœud.',refs:['MD']},
+  {term:'nodeLeave',def:'Commande ringsh retirant proprement un nœud du ring. Les données dont il était responsable sont redistribuées avant son départ effectif.',refs:['MD']},
+  {term:'Object Lock (WORM)',def:'Fonctionnalité S3 bloquant la modification ou suppression d\'un objet pendant une durée définie (Governance ou Compliance mode). Implémente le stockage WORM.',refs:['MH']},
+  {term:'OOS',def:'Out Of Service — état d\'un nœud inaccessible temporairement. Le ring continue à fonctionner en dégradé et le nœud peut rejoindre automatiquement à son retour.',refs:['M5','MD']},
+  {term:'OOS_PERM',def:'Out Of Service Permanent — état d\'un nœud définitivement perdu. Déclenche le rebuild des données de ce nœud sur les autres membres du ring.',refs:['M5','MD']},
+  {term:'Orphelins',def:'Voir "Disk Orphans". Objets physiquement présents sur disque mais sans entrée dans les métadonnées Chord. À nettoyer via Chord Purge.',refs:['M6','MD']},
+  {term:'Platformcheck',def:'Outil de diagnostic Scality vérifiant la conformité de la configuration système (réseau, stockage, OS, BIOS) par rapport aux prérequis de déploiement.',refs:['M9']},
+  {term:'Prometheus',def:'Système de monitoring et d\'alerte collectant les métriques des composants RING via scraping HTTP. Stocke les séries temporelles et évalue les règles d\'alerte.',refs:['M5']},
+  {term:'Purge',def:'Opération de suppression définitive des objets marqués comme supprimés ou expirés. Libère l\'espace disque occupé par les données logiquement supprimées.',refs:['M6','MD']},
+  {term:'Quorum Raft',def:'Nombre minimal de nœuds devant être disponibles pour qu\'un groupe Raft puisse élire un leader et continuer à accepter des écritures. Généralement ⌊N/2⌋+1.',refs:['M3']},
+  {term:'Raft',def:'Algorithme de consensus distribué utilisé par le ring META pour garantir la cohérence des métadonnées. Un leader est élu parmi les nœuds d\'un groupe ; les écritures passent par lui.',refs:['M3']},
+  {term:'Rebuild',def:'Reconstruction des fragments manquants d\'un objet dégradé à partir des fragments survivants. Déclenché automatiquement lors d\'une panne nœud ou disque.',refs:['M4','M6','MD']},
+  {term:'Relocation',def:'Déplacement planifié des données d\'un nœud vers d\'autres nœuds du ring, par exemple avant une opération de maintenance ou un retrait définitif.',refs:['MD']},
+  {term:'Repair',def:'Opération de vérification et correction de l\'intégrité des objets du ring. Vérifie que chaque objet possède le bon nombre de fragments conformes à son COS.',refs:['M6','MD']},
+  {term:'repd',def:'Replication Daemon — daemon s\'exécutant sur chaque nœud META et DATA, responsable de la gestion locale des objets, de leur versioning (bseq) et de la cohérence avec LevelDB.',refs:['M2','M3']},
+  {term:'ringConfigSet',def:'Commande ringsh modifiant les paramètres de configuration du ring (ex: facteur de réplication, seuils d\'alarme). Requiert une validation et peut nécessiter un redémarrage.',refs:['MD']},
+  {term:'RING DATA',def:'Sous-ring dédié au stockage des données (blobs) des objets. Les nœuds DATA hébergent biziod et sproxyd, et contribuent à l\'espace de stockage brut.',refs:['M1','M2']},
+  {term:'RING META',def:'Sous-ring dédié au stockage des métadonnées des objets (index Chord, MESA). Les nœuds META gèrent les groupes Raft et le consensus des métadonnées.',refs:['M1','M2','M3']},
+  {term:'ringsh',def:'Shell interactif d\'administration du RING. Permet d\'exécuter des commandes de diagnostic (ringList, nodeStatus) et de maintenance (nodeJoin, nodeLeave) sur le cluster.',refs:['M5','MD']},
+  {term:'RPO',def:'Recovery Point Objective — perte de données maximale tolérée exprimée en durée. Définit la fréquence minimale de synchronisation pour la reprise après sinistre.',refs:['MG']},
+  {term:'RTO',def:'Recovery Time Objective — durée maximale tolérée d\'interruption de service. Définit le délai maximum pour restaurer le service après un incident.',refs:['MG']},
+  {term:'Salt / SaltStack',def:'Outil de gestion de configuration et d\'orchestration utilisé pour déployer et maintenir les composants Scality RING. Les états Salt décrivent la configuration cible des nœuds.',refs:['M9','MI']},
+  {term:'scaldisk',def:'Outil de gestion des disques sur les nœuds RING. Permet d\'ajouter, retirer, ou vérifier l\'état des disques physiques intégrés au service de stockage.',refs:['M9','MD']},
+  {term:'sfused',def:'Service FUSE implémentant le filesystem SOFS côté client. Expose le namespace SOFS en tant que point de montage POSIX sur les serveurs d\'accès NFS/SMB.',refs:['MA']},
+  {term:'SOFS',def:'Scale-Out File System — système de fichiers distribué Scality exposant une interface POSIX (NFS/SMB) au-dessus du ring de stockage d\'objets.',refs:['MA']},
+  {term:'SPOF',def:'Single Point Of Failure — composant dont la défaillance entraîne l\'arrêt complet du service. L\'architecture RING vise à éliminer les SPOF par redondance.',refs:['M1','M4']},
+  {term:'SPLIT LOOP',def:'Alarme critique indiquant que le ring s\'est fragmenté en deux partitions réseau qui ne se voient plus. Entraîne un split-brain et nécessite une intervention immédiate.',refs:['M5','MD']},
+  {term:'sproxyd',def:'Daemon HTTP de stockage d\'objets s\'exécutant sur les nœuds DATA. Expose une API REST interne et délègue les I/O disque à biziod. Point d\'entrée des données dans le ring.',refs:['M2','M4']},
+  {term:'Supervisor',def:'Daemon de surveillance des processus (supervisord) assurant le redémarrage automatique des services Scality en cas de crash.',refs:['M9']},
+  {term:'SupAPI',def:'Supervisor API — interface REST exposée par supervisord permettant de contrôler et surveiller l\'état des processus Scality sur chaque nœud.',refs:['M9']},
+  {term:'SUR',def:'Storage Utilization Ratio — taux d\'utilisation de l\'espace de stockage brut, tenant compte de l\'overhead de l\'erasure coding ou de la réplication selon le COS.',refs:['M4','M5']},
+  {term:'Thanos',def:'Extension de Prometheus offrant du stockage long terme et une vue agrégée multi-cluster des métriques. Utilisé pour les tableaux de bord Grafana historiques.',refs:['M5']},
+  {term:'Throttling',def:'Mécanisme de limitation du débit d\'I/O ou du nombre de requêtes par seconde, protégeant le ring contre les surcharges. Configurable par COS ou par tenant.',refs:['MF']},
+  {term:'UTAPI',def:'Usage Tracking API — service Scality collectant et exposant les métriques d\'utilisation S3 par bucket et par utilisateur (octets stockés, requêtes, bande passante).',refs:['MF']},
+  {term:'Vault',def:'Service d\'authentification et d\'autorisation IAM de Scality. Gère les comptes, utilisateurs, rôles et politiques S3 (équivalent AWS IAM), ainsi que les clés de chiffrement KMS.',refs:['MC','MB','MH']},
+  {term:'Warm Standby (WSB)',def:'Mode de réplication entre deux sites où le site secondaire reçoit les données en quasi-temps réel mais n\'est pas actif. Bascule rapide possible en cas de panne du site primaire.',refs:['MG']},
+  {term:'XDM',def:'Cross-Domain Management — composant de gestion multi-site permettant d\'administrer plusieurs rings depuis une interface unifiée, avec politiques de CRR et de routage centralisées.',refs:['M3','ME']},
+  {term:'ZooKeeper',def:'Service de coordination distribué (Apache) utilisé par Kafka et certains composants Backbeat pour la synchronisation, la découverte de services et la gestion de configuration.',refs:['ME','MG']}
+];
+
+function openGlossary(){
+  state.view='glossary';
+  document.getElementById('homePage').classList.remove('show');
+  document.getElementById('modulePage').classList.remove('show');
+  document.getElementById('glossaryPage').classList.add('show');
+  renderGlossary();renderSidebar();
+}
+
+function glossJump(letter){
+  var el=document.getElementById('gl-'+letter);
+  if(el)el.scrollIntoView({behavior:'smooth'});
+}
+
+function renderGlossary(){
+  var sorted=GLOSSARY.slice().sort(function(a,b){return a.term.localeCompare(b.term,'fr',{sensitivity:'base'});});
+  var letters={};
+  sorted.forEach(function(e){
+    var l=e.term[0].toUpperCase();
+    if(!letters[l])letters[l]=[];
+    letters[l].push(e);
+  });
+  var keys=Object.keys(letters).sort();
+  var nav='<div class="gloss-alpha">';
+  keys.forEach(function(l){nav+='<span class="gl-al" onclick="glossJump(\''+l+'\')">'+l+'</span>';});
+  nav+='</div>';
+  var body='';
+  keys.forEach(function(l){
+    body+='<div class="gloss-lhdr" id="gl-'+l+'">'+l+'</div>';
+    letters[l].forEach(function(e){
+      var refs='';
+      if(e.refs&&e.refs.length){
+        refs='<div class="gl-ref">';
+        e.refs.forEach(function(id,i){
+          var mi=MODS.findIndex(function(m){return m.id===id;});
+          if(mi>=0){
+            if(i>0)refs+=' &bull; ';
+            refs+='<span onclick="openModule('+mi+')">'+MODS[mi].num+' – '+MODS[mi].title+'</span>';
+          }
+        });
+        refs+='</div>';
+      }
+      body+='<div class="gloss-entry"><div class="gl-term">'+e.term+'</div><div class="gl-def">'+e.def+'</div>'+refs+'</div>';
+    });
+  });
+  document.getElementById('glossBody').innerHTML=nav+body;
 }
 
 renderSidebar();
