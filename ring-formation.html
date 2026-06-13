@@ -772,6 +772,10 @@ function setLang(l){
   localStorage.setItem('ringLang',l);
   document.getElementById('flagFr').classList.toggle('flag-active',l==='fr');
   document.getElementById('flagEn').classList.toggle('flag-active',l==='en');
+  if(state.view==='module'){
+    var m=MODS[state.modIdx];
+    if(!state.scores[m.id]){delete state.answers[m.id];}
+  }
   renderSidebar();
   if(state.view==='home')renderHome();
   else if(state.view==='module'){
@@ -881,8 +885,8 @@ function renderQuiz(){
     var cls2=pct>=80?'ex':pct>=50?'gd':'po';
     var label=pct>=80?L('Excellent !','Excellent!'):pct>=50?L('Bien !','Good!'):L('À revoir','Needs review');
     var msg=pct>=80?L('Vous maîtrisez ce module.','You have mastered this module.'):pct>=50?L('Quelques points à consolider.','A few points to reinforce.'):L('Relisez le cours avant de continuer.','Review the course before continuing.');
-    var next=state.modIdx<MODS.length-1?'<button class="btn btn-ok" onclick="openModule('+(state.modIdx+1)+')">Module suivant &#8594;</button>':'<button class="btn btn-i" onclick="goHome()">'+L('Accueil','Home')+'</button>';
-    html+='<div class="result-box show"><div style="font-size:13px;color:var(--t3)">Resultat</div><div class="rscore '+cls2+'">'+sc.score+'/'+sc.total+'</div><div class="rlabel">'+label+'</div><div class="rmsg">'+pct+'% de reussite &mdash; '+msg+'</div><div class="rnext"><button class="btn btn-s" onclick="resetQuiz()">'+L('Recommencer','Restart')+'</button>'+next+'</div></div>';
+    var next=state.modIdx<MODS.length-1?'<button class="btn btn-ok" onclick="openModule('+(state.modIdx+1)+')">'+L('Module suivant','Next module')+' &#8594;</button>':'<button class="btn btn-i" onclick="goHome()">'+L('Accueil','Home')+'</button>';
+    html+='<div class="result-box show"><div style="font-size:13px;color:var(--t3)">'+L('Résultat','Result')+'</div><div class="rscore '+cls2+'">'+sc.score+'/'+sc.total+'</div><div class="rlabel">'+label+'</div><div class="rmsg">'+pct+L('% de réussite','% correct')+' &mdash; '+msg+'</div><div class="rnext"><button class="btn btn-s" onclick="resetQuiz()">'+L('Recommencer','Restart')+'</button>'+next+'</div></div>';
   }
   document.getElementById('quizView').innerHTML=html;
 }
@@ -899,10 +903,11 @@ function selectOpt(qi,oi){
 
 function validateQuiz(){
   var m=MODS[state.modIdx];
+  var quiz=L(m.quiz,m.quiz_en||m.quiz);
   var answers=state.answers[m.id]||[];
   var score=0;
   quiz.forEach(function(q,qi){if(answers[qi]===q.ans)score++;});
-  state.scores[m.id]={score:score,total:m.quiz.length};
+  state.scores[m.id]={score:score,total:quiz.length};
   save();renderQuiz();renderSidebar();
 }
 
