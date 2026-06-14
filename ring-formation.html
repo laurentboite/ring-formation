@@ -178,7 +178,7 @@ pre code{background:none;padding:0;color:inherit}
       <div class="tv" id="totScore">&#8212;</div>
       <div class="ts" id="totSub">Aucun module complete</div>
     </div>
-    <button class="save-btn" id="saveBtn" onclick="saveToFile()" title="Sauvegarder la progression dans ce fichier HTML">&#128190; <span id="saveBtnTxt">Sauvegarder</span></button>
+    <button class="save-btn" id="saveBtn" onclick="toggleAutoSave()" title="Activer la sauvegarde automatique dans ce fichier HTML">&#128190; <span id="saveBtnTxt">Activer auto-save</span></button>
   </div>
 </aside>
 <main class="main">
@@ -733,36 +733,88 @@ quiz_en:[
 ];
 
 var __savedScores={}; // __RING_SCORES__
-var state={view:'home',tab:'theory',modIdx:0,scores:{},answers:{},lang:localStorage.getItem('ringLang')||'fr'};
+var state={view:'home',tab:'theory',modIdx:0,scores:{},answers:{},lang:localStorage.getItem('ringLang')||'fr',fileHandle:null};
 (function(){
   var fromFile=Object.keys(__savedScores).length>0;
   if(fromFile){state.scores=JSON.parse(JSON.stringify(__savedScores));}
   else{try{var s=JSON.parse(localStorage.getItem('ringState')||'{}');state.scores=s.scores||{};}catch(e){}}
 })();
+
+function _openHandleDB(cb){
+  var req=indexedDB.open('RingFormation',1);
+  req.onupgradeneeded=function(e){e.target.result.createObjectStore('handles');};
+  req.onsuccess=function(e){cb(e.target.result);};
+  req.onerror=function(){cb(null);};
+}
+function _getHandle(cb){
+  _openHandleDB(function(db){if(!db)return cb(null);var tx=db.transaction('handles','readonly');var r=tx.objectStore('handles').get('html');r.onsuccess=function(e){cb(e.target.result||null);};r.onerror=function(){cb(null);};});
+}
+function _storeHandle(handle){
+  _openHandleDB(function(db){if(!db)return;var tx=db.transaction('handles','readwrite');tx.objectStore('handles').put(handle,'html');});
+}
+function _clearHandle(){
+  _openHandleDB(function(db){if(!db)return;var tx=db.transaction('handles','readwrite');tx.objectStore('handles').delete('html');});
+}
+
+async function _writeToHandle(handle){
+  var perm=await handle.queryPermission({mode:'readwrite'});
+  if(perm==='prompt')perm=await handle.requestPermission({mode:'readwrite'});
+  if(perm!=='granted')return false;
+  var file=await handle.getFile();
+  var text=await file.text();
+  var lines=text.split('\n');
+  var idx=lines.findIndex(function(l){return l.indexOf('// __RING_SCORES__')>=0;});
+  if(idx<0)return false;
+  lines[idx]='var __savedScores='+JSON.stringify(state.scores)+'; // __RING_SCORES__';
+  var w=await handle.createWritable();
+  await w.write(lines.join('\n'));
+  await w.close();
+  return true;
+}
+
+function _updateSaveBtn(active){
+  var btn=document.getElementById('saveBtn');
+  var txt=document.getElementById('saveBtnTxt');
+  if(!btn)return;
+  if(active){
+    btn.style.background='var(--ok)';
+    btn.title=L('Sauvegarde automatique activee — cliquer pour desactiver','Auto-save enabled — click to disable');
+    if(txt)txt.textContent=L('Auto-save actif ✓','Auto-save on ✓');
+  }else{
+    btn.style.background='';
+    btn.title=L('Activer la sauvegarde automatique dans ce fichier HTML','Enable auto-save into this HTML file');
+    if(txt)txt.textContent=L('Activer auto-save','Enable auto-save');
+  }
+}
+
 function save(){
   try{localStorage.setItem('ringState',JSON.stringify({scores:state.scores}));}catch(e){}
+  if(state.fileHandle){_writeToHandle(state.fileHandle).catch(function(){});}
 }
-async function saveToFile(){
-  if(!window.showOpenFilePicker){alert(L('Votre navigateur ne supporte pas cette fonctionnalité. Utilisez Chrome ou Edge.','Your browser does not support this feature. Please use Chrome or Edge.'));return;}
+
+async function toggleAutoSave(){
+  if(state.fileHandle){
+    state.fileHandle=null;
+    _clearHandle();
+    _updateSaveBtn(false);
+    return;
+  }
+  if(!window.showOpenFilePicker){
+    alert(L('Disponible dans Chrome et Edge uniquement.','Available in Chrome and Edge only.'));
+    return;
+  }
   try{
     var handles=await window.showOpenFilePicker({types:[{description:'HTML',accept:{'text/html':['.html']}}],multiple:false});
     var handle=handles[0];
-    var file=await handle.getFile();
-    var text=await file.text();
-    var lines=text.split('\n');
-    var idx=lines.findIndex(function(l){return l.indexOf('// __RING_SCORES__')>=0;});
-    if(idx<0){alert(L('Marqueur introuvable dans le fichier sélectionné.','Marker not found in selected file.'));return;}
-    lines[idx]='var __savedScores='+JSON.stringify(state.scores)+'; // __RING_SCORES__';
-    var writable=await handle.createWritable();
-    await writable.write(lines.join('\n'));
-    await writable.close();
-    var btn=document.getElementById('saveBtn');
-    var orig=btn.textContent;
-    btn.textContent=L('✓ Sauvegardé !','✓ Saved!');
-    btn.style.background='var(--ok)';
-    setTimeout(function(){btn.textContent=orig;btn.style.background='';},2500);
+    var ok=await _writeToHandle(handle);
+    if(!ok){alert(L('Impossible d\'ecrire dans ce fichier.','Cannot write to this file.'));return;}
+    state.fileHandle=handle;
+    _storeHandle(handle);
+    _updateSaveBtn(true);
   }catch(e){if(e.name!=='AbortError')alert(L('Erreur : ','Error: ')+e.message);}
 }
+
+_getHandle(function(handle){if(handle){state.fileHandle=handle;setTimeout(function(){_updateSaveBtn(true);},100);}});
 
 function goHome(){
   state.view='home';
@@ -843,7 +895,7 @@ function renderSidebar(){
   var totalScore=Object.values(state.scores).reduce(function(a,b){return a+b.score;},0);
   var totalMax=Object.values(state.scores).reduce(function(a,b){return a+b.total;},0);
   var sl=document.getElementById('sbScoreLabel');if(sl)sl.textContent=L('Score Total','Total Score');
-  var sb=document.getElementById('saveBtnTxt');if(sb)sb.textContent=L('Sauvegarder','Save progress');
+  var sb=document.getElementById('saveBtnTxt');if(sb&&!state.fileHandle)sb.textContent=L('Activer auto-save','Enable auto-save');
   var tv=document.getElementById('totScore');
   var ts=document.getElementById('totSub');
   if(done===0){tv.textContent='--';ts.textContent=L('Aucun module complété','No module completed');}
