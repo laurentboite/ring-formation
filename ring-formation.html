@@ -40,6 +40,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tot-box .tl{font-size:11px;color:var(--t3);margin-bottom:2px}
 .tot-box .tv{font-size:26px;font-weight:800;color:var(--acc);line-height:1}
 .tot-box .ts{font-size:11px;color:var(--t2);margin-top:2px}
+.save-btn{margin-top:10px;width:100%;padding:8px;border:none;border-radius:7px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.save-btn:hover{opacity:.85}
+.sb.collapsed .save-btn{display:none}
 .main{flex:1;overflow-y:auto;height:100vh}
 .home{padding:36px 40px;display:none}
 .home.show{display:block}
@@ -175,6 +178,7 @@ pre code{background:none;padding:0;color:inherit}
       <div class="tv" id="totScore">&#8212;</div>
       <div class="ts" id="totSub">Aucun module complete</div>
     </div>
+    <button class="save-btn" id="saveBtn" onclick="saveToFile()" title="Sauvegarder la progression dans ce fichier HTML">&#128190; <span id="saveBtnTxt">Sauvegarder</span></button>
   </div>
 </aside>
 <main class="main">
@@ -728,9 +732,37 @@ quiz_en:[
 ]}
 ];
 
+var __savedScores={}; // __RING_SCORES__
 var state={view:'home',tab:'theory',modIdx:0,scores:{},answers:{},lang:localStorage.getItem('ringLang')||'fr'};
-try{var s=JSON.parse(localStorage.getItem('ringState')||'{}');state.scores=s.scores||{};}catch(e){}
-function save(){try{localStorage.setItem('ringState',JSON.stringify({scores:state.scores}));}catch(e){}}
+(function(){
+  var fromFile=Object.keys(__savedScores).length>0;
+  if(fromFile){state.scores=JSON.parse(JSON.stringify(__savedScores));}
+  else{try{var s=JSON.parse(localStorage.getItem('ringState')||'{}');state.scores=s.scores||{};}catch(e){}}
+})();
+function save(){
+  try{localStorage.setItem('ringState',JSON.stringify({scores:state.scores}));}catch(e){}
+}
+async function saveToFile(){
+  if(!window.showOpenFilePicker){alert(L('Votre navigateur ne supporte pas cette fonctionnalité. Utilisez Chrome ou Edge.','Your browser does not support this feature. Please use Chrome or Edge.'));return;}
+  try{
+    var handles=await window.showOpenFilePicker({types:[{description:'HTML',accept:{'text/html':['.html']}}],multiple:false});
+    var handle=handles[0];
+    var file=await handle.getFile();
+    var text=await file.text();
+    var lines=text.split('\n');
+    var idx=lines.findIndex(function(l){return l.indexOf('// __RING_SCORES__')>=0;});
+    if(idx<0){alert(L('Marqueur introuvable dans le fichier sélectionné.','Marker not found in selected file.'));return;}
+    lines[idx]='var __savedScores='+JSON.stringify(state.scores)+'; // __RING_SCORES__';
+    var writable=await handle.createWritable();
+    await writable.write(lines.join('\n'));
+    await writable.close();
+    var btn=document.getElementById('saveBtn');
+    var orig=btn.textContent;
+    btn.textContent=L('✓ Sauvegardé !','✓ Saved!');
+    btn.style.background='var(--ok)';
+    setTimeout(function(){btn.textContent=orig;btn.style.background='';},2500);
+  }catch(e){if(e.name!=='AbortError')alert(L('Erreur : ','Error: ')+e.message);}
+}
 
 function goHome(){
   state.view='home';
@@ -811,6 +843,7 @@ function renderSidebar(){
   var totalScore=Object.values(state.scores).reduce(function(a,b){return a+b.score;},0);
   var totalMax=Object.values(state.scores).reduce(function(a,b){return a+b.total;},0);
   var sl=document.getElementById('sbScoreLabel');if(sl)sl.textContent=L('Score Total','Total Score');
+  var sb=document.getElementById('saveBtnTxt');if(sb)sb.textContent=L('Sauvegarder','Save progress');
   var tv=document.getElementById('totScore');
   var ts=document.getElementById('totSub');
   if(done===0){tv.textContent='--';ts.textContent=L('Aucun module complété','No module completed');}
