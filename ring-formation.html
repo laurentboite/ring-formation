@@ -987,12 +987,15 @@ function renderHome(){
   var pct=totalMax>0?Math.round(totalScore/totalMax*100):0;
   document.getElementById('statsRow').innerHTML='<div class="stat-card"><div class="sv col-acc">'+MODS.length+'</div><div class="sl">'+L('Modules au total','Total modules')+'</div></div><div class="stat-card"><div class="sv col-ok">'+done+'</div><div class="sl">'+L('Quiz complétés','Quizzes completed')+'</div></div><div class="stat-card"><div class="sv col-info">'+pct+'%</div><div class="sl">'+L('Score moyen','Avg score')+'</div></div>';
   var grid=document.getElementById('moduleGrid');
-  grid.innerHTML=MODS.map(function(m,i){
+  grid.innerHTML=SIDEBAR_ORDER.map(function(id){
+    var i=MODS.findIndex(function(m){return m.id===id;});
+    if(i===-1)return '';
+    var m=MODS[i];
     var sc=state.scores[m.id];
     var isDone=sc&&sc.score===sc.total;
     var pct2=sc?Math.round(sc.score/sc.total*100):0;
     var pfClass=isDone?'ok':'acc';
-    return '<div class="mc '+(isDone?'done':'')+'" onclick="openModule('+i+')"><div class="mid">Module '+m.num+'</div><div class="mtit">'+m.title+'</div><div class="mdesc">'+m.desc+'</div><div class="mfoot"><div class="pbar"><div class="pfill '+pfClass+'" style="width:'+pct2+'%"></div></div><span class="msc">'+(sc?sc.score+'/'+sc.total+' pts':L('Non commencé','Not started'))+'</span></div></div>';
+    return '<div class="mc '+(isDone?'done':'')+'" onclick="openModule('+i+')"><div class="mtit">'+L(m.title,m.title_en||m.title)+'</div><div class="mdesc">'+L(m.desc,m.desc_en||m.desc)+'</div><div class="mfoot"><div class="pbar"><div class="pfill '+pfClass+'" style="width:'+pct2+'%"></div></div><span class="msc">'+(sc?sc.score+'/'+sc.total+' pts':L('Non commencé','Not started'))+'</span></div></div>';
   }).join('');
 }
 
