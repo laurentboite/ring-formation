@@ -157,6 +157,25 @@ pre code{background:none;padding:0;color:inherit}
 .flag-btn{background:none;border:1.5px solid transparent;border-radius:5px;cursor:pointer;font-size:18px;line-height:1;padding:2px 5px;opacity:.45;transition:opacity .15s,border-color .15s}
 .flag-btn:hover{opacity:.8}
 .flag-btn.flag-active{opacity:1;border-color:var(--acc)}
+/* ── comments ── */
+.cmts-wrap{padding:18px 22px;max-width:760px}
+.cmts-list{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.cmt-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:12px 15px}
+.cmt-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cmt-avatar{width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cmt-name{font-size:13px;font-weight:600;color:var(--t1)}
+.cmt-ts{font-size:11px;color:var(--t3);margin-left:auto}
+.cmt-del{background:none;border:none;cursor:pointer;color:var(--t3);font-size:13px;padding:2px 4px;border-radius:3px;line-height:1;transition:color .15s}
+.cmt-del:hover{color:var(--err)}
+.cmt-text{font-size:13px;color:var(--t2);line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.cmt-empty{color:var(--t3);font-size:13px;padding:12px 0}
+.cmt-form{background:var(--bg2);border:1px solid var(--bdr);border-radius:8px;padding:14px}
+.cmt-form-title{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.cmt-textarea{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;color:var(--t1);font-size:13px;font-family:inherit;padding:9px 12px;resize:vertical;min-height:80px;line-height:1.5;transition:border-color .15s}
+.cmt-textarea:focus{outline:none;border-color:var(--acc)}
+.cmt-submit{margin-top:8px;padding:7px 16px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:opacity .15s}
+.cmt-submit:hover{opacity:.85}
+.cmt-submit:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body>
@@ -198,11 +217,13 @@ pre code{background:none;padding:0;color:inherit}
       <div class="tabs">
         <button class="tbtn active" id="tabCours" onclick="showTab('theory')">Cours</button>
         <button class="tbtn" id="tabQuiz" onclick="showTab('quiz')">Quiz</button>
+        <button class="tbtn" id="tabComments" onclick="showTab('comments')">💬 <span id="commentCount"></span></button>
       </div>
     </div>
     <div class="mpbody">
       <div class="theory" id="theoryView"></div>
       <div class="quiz" id="quizView"></div>
+      <div class="theory" id="commentsView" style="display:none"></div>
     </div>
   </div>
   <div class="mp" id="glossaryPage">
@@ -7953,8 +7974,11 @@ function showTab(tab){
   document.getElementById('tabCours').textContent=L('Cours','Course');
   document.getElementById('tabQuiz').classList.toggle('active',tab==='quiz');
   document.getElementById('tabQuiz').textContent='Quiz';
+  document.getElementById('tabComments').classList.toggle('active',tab==='comments');
   document.getElementById('theoryView').classList.toggle('show',tab==='theory');
   document.getElementById('quizView').classList.toggle('show',tab==='quiz');
+  document.getElementById('commentsView').style.display=tab==='comments'?'block':'none';
+  if(tab==='comments')loadComments();
   document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
@@ -8058,6 +8082,9 @@ function renderModule(){
   document.getElementById('tabCours').textContent=L('Cours','Course');
   document.getElementById('tabQuiz').classList.remove('active');
   document.getElementById('tabQuiz').textContent='Quiz';
+  document.getElementById('tabComments').classList.remove('active');
+  document.getElementById('commentsView').style.display='none';
+  loadCommentCount();
 }
 
 function renderQuiz(){
@@ -8296,6 +8323,72 @@ function toggleSidebar(){
 
 renderSidebar();
 renderHome();
+
+// ── comments ─────────────────────────────────────────────────────────────────
+var _cmtUser = null;
+fetch('/api/me').then(function(r){return r.json();}).then(function(d){_cmtUser=d;}).catch(function(){});
+
+function _currentModuleId(){
+  var m=MODS[state.modIdx];
+  return m?m.id:'general';
+}
+
+function loadCommentCount(){
+  var mid=_currentModuleId();
+  fetch('/api/comments?module='+encodeURIComponent(mid))
+    .then(function(r){return r.json();})
+    .then(function(list){
+      var el=document.getElementById('commentCount');
+      if(el)el.textContent=L('Commentaires','Comments')+(list.length?' ('+list.length+')':'');
+    }).catch(function(){});
+}
+
+function loadComments(){
+  var mid=_currentModuleId();
+  var cv=document.getElementById('commentsView');
+  cv.innerHTML='<div class="cmts-wrap"><p style="color:var(--t3);font-size:13px">Chargement…</p></div>';
+  fetch('/api/comments?module='+encodeURIComponent(mid))
+    .then(function(r){return r.json();})
+    .then(function(list){renderComments(list,mid);})
+    .catch(function(){cv.innerHTML='<div class="cmts-wrap"><p style="color:var(--err);font-size:13px">Erreur de chargement.</p></div>';});
+}
+
+function renderComments(list,mid){
+  var cv=document.getElementById('commentsView');
+  var myEmail=_cmtUser?_cmtUser.email:'';
+  var cards=list.length?list.map(function(c){
+    var initials=(c.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var delBtn=c.email===myEmail?'<button class="cmt-del" onclick="deleteComment(\''+c.id+'\',\''+mid+'\')" title="Supprimer">✕</button>':'';
+    return '<div class="cmt-card"><div class="cmt-header"><div class="cmt-avatar">'+initials+'</div><span class="cmt-name">'+escH(c.name)+'</span><span class="cmt-ts">'+escH(c.ts)+'</span>'+delBtn+'</div><div class="cmt-text">'+escH(c.text)+'</div></div>';
+  }).join(''):'<p class="cmt-empty">'+L('Aucun commentaire pour ce module. Soyez le premier !','No comments yet for this module. Be the first!')+'</p>';
+
+  cv.innerHTML='<div class="cmts-wrap"><div class="cmts-list">'+cards+'</div>'
+    +'<div class="cmt-form"><div class="cmt-form-title">'+L('Ajouter un commentaire','Add a comment')+'</div>'
+    +'<textarea class="cmt-textarea" id="cmtInput" placeholder="'+L('Votre commentaire…','Your comment…')+'"></textarea>'
+    +'<br><button class="cmt-submit" id="cmtSubmit" onclick="postComment(\''+mid+'\')">'+L('Publier','Post')+'</button>'
+    +'</div></div>';
+}
+
+function postComment(mid){
+  var ta=document.getElementById('cmtInput');
+  var btn=document.getElementById('cmtSubmit');
+  var text=(ta?ta.value:'').trim();
+  if(!text)return;
+  btn.disabled=true;
+  fetch('/api/comments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({module:mid,text:text})})
+    .then(function(r){return r.json();})
+    .then(function(){loadComments();loadCommentCount();})
+    .catch(function(){btn.disabled=false;});
+}
+
+function deleteComment(id,mid){
+  if(!confirm(L('Supprimer ce commentaire ?','Delete this comment?')))return;
+  fetch('/api/comments/'+id,{method:'DELETE'})
+    .then(function(){loadComments();loadCommentCount();})
+    .catch(function(){});
+}
+
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 </script>
 </body>
 </html>
