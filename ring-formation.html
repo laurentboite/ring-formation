@@ -8378,7 +8378,7 @@ function renderComments(list,mid){
     return '<div class="cmt-card"><div class="cmt-header"><div class="cmt-avatar">'+initials+'</div><span class="cmt-name">'+escH(c.name)+'</span><span class="cmt-ts">'+escH(c.ts)+'</span>'+delBtn+'</div><div class="cmt-text">'+escH(c.text)+'</div></div>';
   }).join(''):'<p class="cmt-empty">'+L('Aucun commentaire pour ce module. Soyez le premier !','No comments yet for this module. Be the first!')+'</p>';
 
-  cv.innerHTML='<div class="cmts-wrap"><div class="cmts-list">'+cards+'</div>'
+  cv.innerHTML='<div class="cmts-wrap"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><span style="font-size:12px;color:var(--t3)">'+list.length+' review'+(list.length!==1?'s':'')+'</span><a href="/api/comments/export" style="font-size:12px;color:var(--acc);text-decoration:none;padding:4px 10px;border:1px solid var(--acc);border-radius:5px" download>⬇ CSV</a></div><div class="cmts-list">'+cards+'</div>'
     +'<div class="cmt-form"><div class="cmt-form-title">'+L('Ajouter une review','Add a review')+'</div>'
     +'<textarea class="cmt-textarea" id="cmtInput" placeholder="'+L('Votre review…','Your review…')+'"></textarea>'
     +'<br><button class="cmt-submit" id="cmtSubmit" onclick="postComment(\''+mid+'\')">'+L('Publier','Post')+'</button>'

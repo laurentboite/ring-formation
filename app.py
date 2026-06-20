@@ -1,6 +1,6 @@
-import os
+import os, csv, io
 from datetime import timezone
-from flask import Flask, redirect, url_for, session, send_file, request, abort, jsonify
+from flask import Flask, redirect, url_for, session, send_file, request, abort, jsonify, Response
 from google.oauth2 import id_token
 from google_auth_oauthlib.flow import Flow
 import google.auth.transport.requests
@@ -130,6 +130,34 @@ def delete_comment(doc_id):
         abort(403, 'Vous ne pouvez supprimer que vos propres commentaires')
     ref.delete()
     return jsonify({'ok': True})
+
+@app.route('/api/comments/export')
+def export_comments():
+    if 'email' not in session:
+        abort(401)
+    docs = db.collection('comments').stream()
+    rows = []
+    for d in docs:
+        data = d.to_dict()
+        ts = data.get('ts')
+        rows.append({
+            'id':     d.id,
+            'module': data.get('module', ''),
+            'name':   data.get('name', ''),
+            'email':  data.get('email', ''),
+            'date':   ts.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M UTC') if ts else '',
+            'text':   data.get('text', '').replace('\n', ' '),
+        })
+    rows.sort(key=lambda x: (x['module'], x['date']))
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=['module','name','email','date','text','id'])
+    writer.writeheader()
+    writer.writerows(rows)
+    return Response(
+        '﻿' + buf.getvalue(),  # BOM pour Excel
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename="ring-formation-reviews.csv"'}
+    )
 
 @app.route('/api/me')
 def me():
