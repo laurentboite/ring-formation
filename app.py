@@ -159,6 +159,52 @@ def export_comments():
         headers={'Content-Disposition': 'attachment; filename="ring-formation-reviews.csv"'}
     )
 
+@app.route('/api/scores', methods=['POST'])
+def post_score():
+    if 'email' not in session:
+        abort(401)
+    data = request.get_json(force=True)
+    db.collection('scores').add({
+        'module':  data.get('module', ''),
+        'title':   data.get('title', ''),
+        'score':   data.get('score', 0),
+        'total':   data.get('total', 0),
+        'email':   session['email'],
+        'name':    session.get('name', session['email'].split('@')[0]),
+        'ts':      firestore.SERVER_TIMESTAMP,
+    })
+    return jsonify({'ok': True})
+
+@app.route('/api/scores/export')
+def export_scores():
+    if 'email' not in session:
+        abort(401)
+    docs = db.collection('scores').stream()
+    rows = []
+    for d in docs:
+        data = d.to_dict()
+        ts = data.get('ts')
+        rows.append({
+            'name':    data.get('name', ''),
+            'email':   data.get('email', ''),
+            'module':  data.get('module', ''),
+            'title':   data.get('title', ''),
+            'score':   data.get('score', 0),
+            'total':   data.get('total', 0),
+            'pct':     round(data.get('score', 0) / data.get('total', 1) * 100),
+            'date':    ts.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M UTC') if ts else '',
+        })
+    rows.sort(key=lambda x: (x['email'], x['module'], x['date']))
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=['name','email','module','title','score','total','pct','date'])
+    writer.writeheader()
+    writer.writerows(rows)
+    return Response(
+        '﻿' + buf.getvalue(),
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': 'attachment; filename="ring-formation-scores.csv"'}
+    )
+
 @app.route('/api/me')
 def me():
     if 'email' not in session:

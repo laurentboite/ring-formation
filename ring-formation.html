@@ -198,6 +198,7 @@ pre code{background:none;padding:0;color:inherit}
       <div class="ts" id="totSub">Aucun module complete</div>
     </div>
     <button class="save-btn" id="saveBtn" onclick="toggleAutoSave()" title="Activer la sauvegarde automatique dans ce fichier HTML">&#128190; <span id="saveBtnTxt">Activer auto-save</span></button>
+    <a class="save-btn" href="/api/scores/export" download style="display:block;text-align:center;text-decoration:none;margin-top:6px">&#128202; Export scores CSV</a>
   </div>
 </aside>
 <main class="main">
@@ -8163,6 +8164,9 @@ function validateQuiz(){
   quiz.forEach(function(q,qi){if(answers[qi]===q.ans)score++;});
   state.scores[m.id]={score:score,total:quiz.length};
   save();renderQuiz();renderSidebar();
+  fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({module:m.id,title:L(m.title,m.title_en||m.title),score:score,total:quiz.length})
+  }).catch(function(){});
 }
 
 function resetQuiz(){
