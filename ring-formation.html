@@ -193,7 +193,6 @@ pre code{background:none;padding:0;color:inherit}
     <div class="mphdr">
       <button class="backbtn" onclick="goHome()">&#8592; Accueil</button>
       <div class="mphdr-info">
-        <div class="mph-id" id="mpId"></div>
         <div class="mph-title" id="mpTitle"></div>
       </div>
       <div class="tabs">
@@ -1001,7 +1000,6 @@ function renderHome(){
 
 function renderModule(){
   var m=MODS[state.modIdx];
-  document.getElementById('mpId').textContent='Module '+m.num;
   document.getElementById('mpTitle').textContent=L(m.title,m.title_en||m.title);
   document.getElementById('theoryView').innerHTML=L(m.content,m.content_en||m.content);
   document.getElementById('theoryView').classList.add('show');
