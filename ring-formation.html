@@ -921,11 +921,11 @@ function showTab(tab){
   document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
-var SIDEBAR_ORDER=['01','02','03','04','07','10','12','15','17','14','16','05','06','08','13','09','11','18','19'];
-var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers'};
+var SIDEBAR_ORDER=['01','02','03','04','07','10','12','15','17','14','16','05','06','08','13','09','11','18','19','20'];
+var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers','20':'Opérations S3'};
 
 
-var SIDEBAR_GROUPS_EN={"Architecture RING": "RING Architecture", "SOFS": "SOFS", "S3 Connector": "S3 Connector", "CRR & Multi-site DR": "CRR & Multi-site DR", "Exploitation du RING": "RING Operations", "Administration": "Administration", "Composants Tiers": "Third-party Components"};
+var SIDEBAR_GROUPS_EN={"Architecture RING": "RING Architecture", "SOFS": "SOFS", "S3 Connector": "S3 Connector", "CRR & Multi-site DR": "CRR & Multi-site DR", "Exploitation du RING": "RING Operations", "Administration": "Administration", "Composants Tiers": "Third-party Components", "Opérations S3": "S3 Operations"};
 function L(fr,en){return state.lang==='en'?en:fr;}
 function setLang(l){
   state.lang=l;
