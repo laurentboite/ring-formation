@@ -84,10 +84,7 @@ def get_comments():
     if 'email' not in session:
         abort(401)
     module = request.args.get('module', 'general')
-    docs = (db.collection('comments')
-              .where('module', '==', module)
-              .order_by('ts')
-              .stream())
+    docs = db.collection('comments').where('module', '==', module).stream()
     result = []
     for d in docs:
         data = d.to_dict()
@@ -99,7 +96,9 @@ def get_comments():
             'email':  data.get('email'),
             'name':   data.get('name'),
             'ts':     ts.astimezone(timezone.utc).strftime('%d/%m/%Y %H:%M') if ts else '',
+            '_sort':  ts.timestamp() if ts else 0,
         })
+    result.sort(key=lambda x: x.pop('_sort'))
     return jsonify(result)
 
 @app.route('/api/comments', methods=['POST'])
