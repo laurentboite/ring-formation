@@ -79,17 +79,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .mpbody{flex:1;overflow-y:auto}
 .theory{padding:28px 4vw;max-width:none;display:none}
 .theory.show{display:block}
-.theory h2{font-size:22px;font-weight:700;color:var(--acc);margin:28px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--bdr)}
+.theory h2{font-size:18px;font-weight:700;color:var(--acc);margin:24px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
 .theory h2:first-child{margin-top:0}
-.theory h3{font-size:17px;font-weight:600;margin:20px 0 8px;color:var(--t1)}
-.theory p{margin-bottom:12px;color:var(--t2);font-size:16px;line-height:1.75}
-.theory ul,.theory ol{margin:8px 0 12px 24px;color:var(--t2);font-size:16px}
+.theory h3{font-size:15px;font-weight:600;margin:16px 0 6px;color:var(--t1)}
+.theory p{margin-bottom:10px;color:var(--t2);font-size:14px;line-height:1.7}
+.theory ul,.theory ol{margin:6px 0 10px 22px;color:var(--t2);font-size:14px}
 .theory li{margin-bottom:5px;line-height:1.6}
 .theory strong{color:var(--t1)}
 code{background:var(--code);color:#7dd3fc;padding:2px 5px;border-radius:3px;font-family:'SF Mono','Fira Code',monospace;font-size:11.5px}
 pre{background:var(--code);border:1px solid var(--bdr);border-radius:8px;padding:14px;overflow-x:auto;margin:10px 0;font-family:'SF Mono','Fira Code',monospace;font-size:11.5px;line-height:1.7;color:#a5f3fc}
 pre code{background:none;padding:0;color:inherit}
-.theory table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px}
+.theory table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
 .theory th{background:var(--bg3);padding:11px 14px;text-align:left;font-weight:600;color:var(--t1);border-bottom:2px solid var(--acc)}
 .theory td{padding:11px 14px;border-bottom:1px solid var(--bdr);color:var(--t2);vertical-align:top}
 .theory tr:hover td{background:rgba(255,255,255,.02)}
@@ -113,7 +113,7 @@ pre code{background:none;padding:0;color:inherit}
 .qcard{background:var(--bg3);border:1px solid var(--bdr);border-radius:11px;padding:18px;margin-bottom:14px;transition:border-color .2s}
 .qcard.answered{border-color:var(--bg4)}
 .qnum{font-size:10px;color:var(--acc);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
-.qtxt{font-size:16px;font-weight:500;margin-bottom:16px;line-height:1.55;color:var(--t1)}
+.qtxt{font-size:14px;font-weight:500;margin-bottom:14px;line-height:1.55;color:var(--t1)}
 .opts{display:flex;flex-direction:column;gap:7px}
 .opt{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;background:var(--bg2);border:1px solid var(--bdr);border-radius:7px;cursor:pointer;transition:all .15s;font-size:13px;color:var(--t2);line-height:1.5}
 .opt:hover:not(.locked){border-color:var(--acc);color:var(--t1);background:var(--bg4)}
@@ -4717,13 +4717,19 @@ footer .src{font-family:var(--mono);font-size:11.5px;line-height:2}
 
 <style id="rf-theme-override">
 :root{--bg:#0f1117;--bg2:#1a1f2e;--panel:#242938;--panel2:#2d3346;--line:#2d3346;--grid:transparent;--text:#e2e8f0;--dim:#94a3b8;--faint:#64748b;--data:#f26522;--data-dim:#7a3a18;--meta:#f26522;--meta-dim:#7a3a18;--auth:#ff8c4a;--ok:#22c55e;--err:#ef4444;--mono:ui-monospace,'Cascadia Code','Fira Code',monospace;--serif:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:15px!important}
+body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:14px!important}
 nav.top-nav,.top-nav,header nav,.site-nav{display:none!important}
 a{color:#f26522}code,pre,.mono{font-family:var(--mono)!important}
 .stage{background:var(--panel);border-color:var(--line)}.stage-head .snum{background:#f26522;color:#fff}
 .deep{background:var(--panel);border-left:3px solid #f26522}
 th{background:var(--panel2);color:var(--dim)}tr:hover td{background:rgba(242,101,34,.06)}
 pre,code{background:var(--bg2)!important}h1 em,.hero em{color:#f26522;font-style:normal}
+h1{font-size:clamp(22px,3.5vw,34px)!important;line-height:1.1!important}
+h2{font-size:clamp(16px,2.5vw,22px)!important}
+.lede,.gist{font-size:14px!important}
+.stage h3{font-size:17px!important}
+.step .t{font-size:14px!important}.step .x{font-size:13px!important}
+details.dd summary{font-size:13.5px!important}details.dd .body{font-size:13px!important}
 </style>
 </head>
 <body>
@@ -5653,13 +5659,19 @@ footer .src{font-family:var(--mono);font-size:11.5px;line-height:2}
 
 <style id="rf-theme-override">
 :root{--bg:#0f1117;--bg2:#1a1f2e;--panel:#242938;--panel2:#2d3346;--line:#2d3346;--grid:transparent;--text:#e2e8f0;--dim:#94a3b8;--faint:#64748b;--data:#f26522;--data-dim:#7a3a18;--meta:#f26522;--meta-dim:#7a3a18;--auth:#ff8c4a;--ok:#22c55e;--err:#ef4444;--mono:ui-monospace,'Cascadia Code','Fira Code',monospace;--serif:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:15px!important}
+body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:14px!important}
 nav.top-nav,.top-nav,header nav,.site-nav{display:none!important}
 a{color:#f26522}code,pre,.mono{font-family:var(--mono)!important}
 .stage{background:var(--panel);border-color:var(--line)}.stage-head .snum{background:#f26522;color:#fff}
 .deep{background:var(--panel);border-left:3px solid #f26522}
 th{background:var(--panel2);color:var(--dim)}tr:hover td{background:rgba(242,101,34,.06)}
 pre,code{background:var(--bg2)!important}h1 em,.hero em{color:#f26522;font-style:normal}
+h1{font-size:clamp(22px,3.5vw,34px)!important;line-height:1.1!important}
+h2{font-size:clamp(16px,2.5vw,22px)!important}
+.lede,.gist{font-size:14px!important}
+.stage h3{font-size:17px!important}
+.step .t{font-size:14px!important}.step .x{font-size:13px!important}
+details.dd summary{font-size:13.5px!important}details.dd .body{font-size:13px!important}
 </style>
 </head>
 <body>
@@ -6422,13 +6434,19 @@ footer a{color:var(--data)}
 
 <style id="rf-theme-override">
 :root{--bg:#0f1117;--bg2:#1a1f2e;--panel:#242938;--panel2:#2d3346;--line:#2d3346;--grid:transparent;--text:#e2e8f0;--dim:#94a3b8;--faint:#64748b;--data:#f26522;--data-dim:#7a3a18;--meta:#f26522;--meta-dim:#7a3a18;--auth:#ff8c4a;--ok:#22c55e;--err:#ef4444;--mono:ui-monospace,'Cascadia Code','Fira Code',monospace;--serif:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:15px!important}
+body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:14px!important}
 nav.top-nav,.top-nav,header nav,.site-nav{display:none!important}
 a{color:#f26522}code,pre,.mono{font-family:var(--mono)!important}
 .stage{background:var(--panel);border-color:var(--line)}.stage-head .snum{background:#f26522;color:#fff}
 .deep{background:var(--panel);border-left:3px solid #f26522}
 th{background:var(--panel2);color:var(--dim)}tr:hover td{background:rgba(242,101,34,.06)}
 pre,code{background:var(--bg2)!important}h1 em,.hero em{color:#f26522;font-style:normal}
+h1{font-size:clamp(22px,3.5vw,34px)!important;line-height:1.1!important}
+h2{font-size:clamp(16px,2.5vw,22px)!important}
+.lede,.gist{font-size:14px!important}
+.stage h3{font-size:17px!important}
+.step .t{font-size:14px!important}.step .x{font-size:13px!important}
+details.dd summary{font-size:13.5px!important}details.dd .body{font-size:13px!important}
 </style>
 </head>
 <body>
@@ -7285,13 +7303,19 @@ footer .src{font-family:var(--mono);font-size:11.5px;line-height:2}
 
 <style id="rf-theme-override">
 :root{--bg:#0f1117;--bg2:#1a1f2e;--panel:#242938;--panel2:#2d3346;--line:#2d3346;--grid:transparent;--text:#e2e8f0;--dim:#94a3b8;--faint:#64748b;--data:#f26522;--data-dim:#7a3a18;--meta:#f26522;--meta-dim:#7a3a18;--auth:#ff8c4a;--ok:#22c55e;--err:#ef4444;--mono:ui-monospace,'Cascadia Code','Fira Code',monospace;--serif:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:15px!important}
+body{background:var(--bg)!important;background-image:none!important;font-family:var(--sans)!important;font-size:14px!important}
 nav.top-nav,.top-nav,header nav,.site-nav{display:none!important}
 a{color:#f26522}code,pre,.mono{font-family:var(--mono)!important}
 .stage{background:var(--panel);border-color:var(--line)}.stage-head .snum{background:#f26522;color:#fff}
 .deep{background:var(--panel);border-left:3px solid #f26522}
 th{background:var(--panel2);color:var(--dim)}tr:hover td{background:rgba(242,101,34,.06)}
 pre,code{background:var(--bg2)!important}h1 em,.hero em{color:#f26522;font-style:normal}
+h1{font-size:clamp(22px,3.5vw,34px)!important;line-height:1.1!important}
+h2{font-size:clamp(16px,2.5vw,22px)!important}
+.lede,.gist{font-size:14px!important}
+.stage h3{font-size:17px!important}
+.step .t{font-size:14px!important}.step .x{font-size:13px!important}
+details.dd summary{font-size:13.5px!important}details.dd .body{font-size:13px!important}
 </style>
 </head>
 <body>
