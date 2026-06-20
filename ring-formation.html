@@ -217,7 +217,7 @@ pre code{background:none;padding:0;color:inherit}
       <div class="tabs">
         <button class="tbtn active" id="tabCours" onclick="showTab('theory')">Cours</button>
         <button class="tbtn" id="tabQuiz" onclick="showTab('quiz')">Quiz</button>
-        <button class="tbtn" id="tabComments" onclick="showTab('comments')">💬 <span id="commentCount"></span></button>
+        <button class="tbtn" id="tabComments" onclick="showTab('comments')">💬 Review<span id="commentCount"></span></button>
       </div>
     </div>
     <div class="mpbody">
@@ -8355,7 +8355,7 @@ function loadCommentCount(){
     .then(function(r){return r.json();})
     .then(function(list){
       var el=document.getElementById('commentCount');
-      if(el)el.textContent=L('Commentaires','Comments')+(list.length?' ('+list.length+')':'');
+      if(el)el.textContent=list.length?' ('+list.length+')':'';
     }).catch(function(){});
 }
 
@@ -8379,8 +8379,8 @@ function renderComments(list,mid){
   }).join(''):'<p class="cmt-empty">'+L('Aucun commentaire pour ce module. Soyez le premier !','No comments yet for this module. Be the first!')+'</p>';
 
   cv.innerHTML='<div class="cmts-wrap"><div class="cmts-list">'+cards+'</div>'
-    +'<div class="cmt-form"><div class="cmt-form-title">'+L('Ajouter un commentaire','Add a comment')+'</div>'
-    +'<textarea class="cmt-textarea" id="cmtInput" placeholder="'+L('Votre commentaire…','Your comment…')+'"></textarea>'
+    +'<div class="cmt-form"><div class="cmt-form-title">'+L('Ajouter une review','Add a review')+'</div>'
+    +'<textarea class="cmt-textarea" id="cmtInput" placeholder="'+L('Votre review…','Your review…')+'"></textarea>'
     +'<br><button class="cmt-submit" id="cmtSubmit" onclick="postComment(\''+mid+'\')">'+L('Publier','Post')+'</button>'
     +'</div></div>';
 }
