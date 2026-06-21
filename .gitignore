@@ -4,3 +4,32 @@
 *.zip
 *.tar.gz
 *.run
+# bases de données
+*.db
+# données brutes / exports
+*.csv
+ring_install_base_*.csv
+# fichiers temporaires
+.~lock.*
+# docs personnels
+*.docx
+*.pptx
+*.rar
+*.zcos
+# classements / divers
+classement_*
+etudiant-*
+figaro-*
+par-filiere*
+attractivite.csv
+cs_program_*.csv
+nps_ring_*.html
+support-scalecare-*.html
+ring-release-notes.html.bak*
+Annales_*
+Synthese_*
+Maxpid_*
+CCINP*
+image-*.png
+Scality\ RING*
+Versity*
