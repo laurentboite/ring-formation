@@ -595,6 +595,27 @@ quiz_en:[
   {q:"In the rm scenario, which step actually returns disk space?",opts:["The MESA transaction removing the entry","The Garbage Collector","The Purge, after a seven-day retention","The Relocation, which rewrites the DAT files after the Purge"],ans:3,expl:"The nodes go dark in three stages in the animation: the GC processes deletion lists, the Purge unallocates after retention, and it is the Relocation that rewrites the DAT files and returns the space."},
   {q:"Which scenario lights up the RING META zone only, never touching the DATA RING?",opts:["ls -l","The partial read","The write","rm"],ans:0,expl:"Size, permissions, timestamps and tree structure all live in MESA. That is what justifies dedicated SSDs for SOFS metadata: an ls -R is a flood of small random reads."}
 ]},
+{id:'26',num:'26',title:'S3 — Anatomie animée',desc:'PUT, GET, DELETE, Multipart : la même pile, quatre chorégraphies',
+content:'<p>Chargement...</p>',
+quiz:[
+  {q:"Dans l'animation du PUT, pourquoi les métadonnées ne sont-elles écrites qu'après les 12 fragments ?",opts:["Parce que le leader Raft est plus lent que le RING","Parce qu'un objet visible sans données serait pire : un GET échouerait sur un objet listé","Parce que Vault doit valider les fragments avant de signer l'entrée","Parce que l'ordre est aléatoire, les deux écritures sont concurrentes"],ans:1,expl:"Tant que l'entrée n'est pas commitée dans repd, l'objet n'existe pour personne. L'ordre inverse produirait un objet listé mais illisible. Une écriture interrompue ne laisse au pire que des fragments orphelins, récupérés par le GC."},
+  {q:"Sur le GET, la lecture des métadonnées vise le leader Raft et non un follower. Pourquoi ?",opts:["Le leader est le seul à détenir une copie complète","Un follower peut avoir du retard et servir une version périmée","Les followers sont réservés aux écritures","C'est une limitation de LevelDB"],ans:1,expl:"Les followers répliquent le journal avec un décalage possible. Servir une lecture depuis un follower en retard renverrait un état ancien — pire que d'attendre le leader. Les alertes de désynchronisation surveillent précisément cet écart."},
+  {q:"Combien de nœuds s'allument côté RING DATA pendant le GET, et pourquoi ?",opts:["12 sur 12 : tous les fragments sont nécessaires","7 sur 12 : k fragments suffisent, le RING interroge les plus rapides","1 seul : celui qui détient la copie primaire","3 sur 12, un par réplica"],ans:1,expl:"En ARC 7+5, n'importe quels 7 fragments des 12 reconstruisent l'objet. Le RING sollicite les nœuds les plus rapides et ignore les traînards. Sans fragment manquant, aucun décodage Reed-Solomon n'est même nécessaire."},
+  {q:"Après le 204 du DELETE, que montre l'animation côté RING DATA ?",opts:["Les nœuds s'éteignent immédiatement","Les nœuds restent allumés : les octets sont toujours sur les disques","Les nœuds passent en rouge, signalant une erreur","La grille disparait, l'objet n'a jamais existé"],ans:1,expl:"Le 204 ne récompense qu'une écriture de tombstone dans les métadonnées. Les octets restent sur les disques pendant toute la rétention, puis chordpurge, Purge et Relocation s'enchainent. C'est ce décalage qui explique qu'un client supprime des téraoctets sans voir sa capacité bouger avant plusieurs jours."},
+  {q:"Que déplace CompleteMultipartUpload dans l'animation ?",opts:["Les 64 parties, recopiées du shadow bucket vers le bucket final","Rien : seules les métadonnées sont commitées, les parties sont déjà dans le RING","Uniquement les parties de plus de 5 Mo","Les parties sont réencodées en un seul objet ARC"],ans:1,expl:"Les parties ont été écrites au fil de l'eau, chacune avec son propre chemin ARC et sa propre entrée. Complete se contente de commiter une entrée qui les référence dans l'ordre — d'où une opération quasi instantanée, même sur 5 To."},
+  {q:"Pourquoi l'ETag d'un objet multipart ne correspond-il jamais au MD5 du fichier téléchargé ?",opts:["Parce qu'il est calculé sur les données chiffrées","Parce qu'il vaut le MD5 de la concaténation binaire des MD5 des parties, suffixé du nombre de parties","Parce que l'ETag change à chaque lecture","Parce qu'il est calculé par Vault et non par CloudServer"],ans:1,expl:"L'ETag multipart a la forme md5(concat binaire des MD5 de parties) suivi d'un tiret et du nombre de parties, par exemple a7f3...-64. Vérifier le corps téléchargé contre cet ETag échouera donc systématiquement."}
+],
+title_en:'S3 — Animated anatomy',
+desc_en:'PUT, GET, DELETE, Multipart: one stack, four choreographies',
+content_en:'<p>Loading...</p>',
+quiz_en:[
+  {q:"In the PUT animation, why is metadata written only after the 12 fragments?",opts:["Because the Raft leader is slower than the RING","Because a visible object with no data would be worse: a GET would fail on a listed object","Because Vault must validate the fragments before signing the entry","Because the order is random, both writes are concurrent"],ans:1,expl:"Until the entry is committed in repd, the object exists for nobody. The reverse order would produce a listed but unreadable object. An interrupted write leaves at most orphan fragments, reclaimed by the GC."},
+  {q:"On the GET, the metadata read targets the Raft leader and not a follower. Why?",opts:["The leader is the only one holding a complete copy","A follower may lag and serve a stale version","Followers are reserved for writes","It is a LevelDB limitation"],ans:1,expl:"Followers replicate the log with a possible delay. Serving a read from a lagging follower would return a stale state — worse than waiting for the leader. Desynchronisation alerts watch precisely that gap."},
+  {q:"How many DATA RING nodes light up during the GET, and why?",opts:["12 of 12: every fragment is needed","7 of 12: k fragments are enough, the RING queries the fastest ones","Only 1: the node holding the primary copy","3 of 12, one per replica"],ans:1,expl:"With ARC 7+5, any 7 of the 12 fragments rebuild the object. The RING queries the fastest nodes and ignores stragglers. With no fragment missing, no Reed-Solomon decoding is even required."},
+  {q:"After the DELETE returns 204, what does the animation show on the DATA RING side?",opts:["The nodes go dark immediately","The nodes stay lit: the bytes are still on the disks","The nodes turn red, signalling an error","The grid disappears, the object never existed"],ans:1,expl:"The 204 rewards only a tombstone write in the metadata. Bytes stay on disk for the whole retention window, then chordpurge, Purge and Relocation follow. That lag is why a customer deletes terabytes and sees no capacity change for days."},
+  {q:"What does CompleteMultipartUpload move in the animation?",opts:["The 64 parts, copied from the shadow bucket into the final bucket","Nothing: only metadata is committed, the parts are already in the RING","Only the parts larger than 5 MB","The parts are re-encoded into a single ARC object"],ans:1,expl:"Parts were written as they arrived, each with its own ARC path and its own entry. Complete merely commits an entry referencing them in order — hence a near-instant operation, even on 5 TB."},
+  {q:"Why does the ETag of a multipart object never match the MD5 of the downloaded file?",opts:["Because it is computed over encrypted data","Because it is the MD5 of the binary concatenation of the part MD5s, suffixed with the part count","Because the ETag changes on every read","Because it is computed by Vault rather than CloudServer"],ans:1,expl:"A multipart ETag has the form md5(binary concat of part MD5s) followed by a dash and the part count, for example a7f3...-64. Checking the downloaded body against that ETag will therefore always fail."}
+]},
 {id:'11',num:'11',title:'Procédure d\'Upgrade RING',desc:'Prerequis, chemins de version, sequence Supervisor -> Storage -> Connectors',
 content:'<h2>Principes Fondamentaux de l\'Upgrade RING</h2><p>Un upgrade RING est une <strong>opération critique</strong> qui doit être planifiée rigoureusement. La règle d\'or : <strong>un seul composant a la fois, dans l\'ordre prescrit, avec validation a chaque étape</strong>. Un upgrade mal exécute peut causer une interruption de service ou, dans les cas extremes, une perte de données.</p><h2>Matrice de Compatibilite des Versions</h2><div class="alert alert-d">Upgrade direct RING 7 vers RING 9 : STRICTEMENT INTERDIT. La base de données MESA et le format des containers Biziod ont change de façon incompatible entre RING 7 et RING 9. Un upgrade direct corromprait les données.</div><table><tr><th>Version source</th><th>Version cible</th><th>Chemin</th></tr><tr><td>RING 7.x</td><td>RING 9.x</td><td>INTERDIT direct. Aller RING 7 -> RING 8 -> RING 9</td></tr><tr><td>RING 8.x</td><td>RING 9.5.2</td><td>Direct supporte</td></tr><tr><td>RING 9.0 - 9.4</td><td>RING 9.5.2</td><td>Direct supporte</td></tr><tr><td>SOFS connectors &lt; 8.5.8.7</td><td>RING 9</td><td>Upgrade intermédiaire obligatoire vers 8.5.8.7 d\'abord</td></tr><tr><td>SOFS connectors 9.0 ou 9.1</td><td>RING 9.2+</td><td>Arrêter TOUS les connectors du volume avant d\'upgrader le premier</td></tr></table><h3>Cas special SOFS 9.0/9.1 -> 9.2+</h3><p>Entre RING 9.1 et 9.2, le <strong>format de stockage des métadonnées SOFS a change</strong>. Un connector 9.1 et un connector 9.2 sur le même volume sont incompatibles. La procédure est :</p><ol><li>Arrêter TOUS les connectors SOFS du volume simultanément</li><li>Upgrader tous les connectors en une seule fenêtre de maintenance</li><li>Redémarrer tous les connectors</li></ol><h2>Prerequis — Checklist Pre-Upgrade</h2><h3>1. Ticket Scality Support (OBLIGATOIRE)</h3><p>Avant tout upgrade, <strong>ouvrir un ticket Scality Support</strong> est OBLIGATOIRE. L\'équipe Support :</p><ul><li>Valide que l\'environnement est pret pour l\'upgrade (version courante, OS, espace disque)</li><li>Confirme le chemin de version exact (pas d\'étape intermédiaire oubliée)</li><li>Est disponible pour assister en cas de problème pendant l\'upgrade</li></ul><h3>2. Terminal persistant (Tmux ou Screen)</h3><p>Une déconnexion SSH en milieu d\'upgrade est catastrophique. Tmux et Screen maintiennent la session active même si la connexion est interrompue :</p><pre># Demarrer une session tmux\ntmux new -s upgrade\n\n# Se rattacher après déconnexion\ntmux attach -t upgrade\n\n# Ou avec Screen\nscreen -S upgrade\nscreen -r upgrade  # rattachement</pre><h3>3. Vérifications pre-upgrade</h3><pre># Vérifier le RING est en état RUN\nringsh supervisor ringList\nringsh supervisor ringStatus &lt;RING&gt;\n\n# Vérifier l\'espace /var\ndf -h /var\n\n# Vérifier PermitRootLogin\ngrep PermitRootLogin /etc/ssh/sshd_config\n\n# Vérifier la version scaldisk (doit = version RING courante)\nscaldisk --version</pre><h3>4. Cas CRR pre-upgrade</h3><div class="alert alert-w">Si le Cross-Region Réplication (CRR) est active sur le S3 Connector ET que vous upgradez depuis une version &lt; 9.5.2.0, une <strong>procédure de pre-upgrade CRR obligatoire</strong> doit être exécutée. Elle vide les queues de réplication en attente avant l\'upgrade pour éviter toute corruption. Contacter Scality Support pour la procédure exacte.</div><h2>Sequence Complete d\'Upgrade</h2><div class="adiag">PHASE 1 : PREPARATION\n  1. Vérifier versions + matrice de compatibilite\n  2. Ouvrir ticket Scality Support\n  3. Exécuter CRR pre-upgrade si applicable\n  4. Ouvrir terminal Tmux/Screen\n  5. Vérifier état RING : RUN obligatoire\n  6. Telecharger archive .run + vérifier sha256\n  7. Uploader sur le Supervisor\n  8. chmod +x installer.run\n  9. FORCE_PY3=1 ./installer.run -y --extract-only\n 10. Vérifier rôle Prometheus (si upgrade depuis &lt; 9.5.0)\n 11. /srv/scality/bin/precheck_upgrade --offline\n 12. Migration SSO si upgrade depuis &lt; 9.4.0.0\n\nPHASE 2 : UPGRADE SUPERVISOR\n 13. /srv/scality/scripts/prépare_upgrade\n     -> Attendre : "prépare_upgrade completed successfully"\n 14. salt \'*\' state.sls scality.req.platform.kernel\n     -> Met a jour les paramètres kernel sysctl sur tous les serveurs\n 15. /srv/scality/scripts/supervisor_upgrade\n     -> Attendre : "supervisor_upgrade completed successfully"\n     -> Le Supervisor redémarre\n     -> L\'UI affiche CONF_MISMATCH -> NORMAL, NE PAS CLIQUER Apply Config\n\nPHASE 3 : UPGRADE STORAGE SERVERS (un par un)\n 16. Pour chaque storage server :\n     a. Entrer en mode maintenance (tous les RINGs)\n     b. Vérifier état RING : RUN ou CONF_MISMATCH uniquement\n     c. nodeLeave -> attendre état OUT_OF_SERVICE\n     d. systemctl stop scality-node\n     e. yum update packages scality\n     f. systemctl start scality-node\n     g. nodeJoin -> attendre état RUN\n     h. Appliquer logging + sagentd\n     i. Passer au serveur SUIVANT seulement si RUN\n 17. Exit maintenance mode (tous les RINGs)\n\nPHASE 4 : UPGRADE CONNECTORS SOFS (si applicable)</div><h2>Phase 3 — Upgrade d\'un Storage Server en Detail</h2><h3>Étape a : Mode maintenance</h3><pre># Pour CHAQUE RING du cluster\nfor RING in $(ringsh supervisor ringList | grep -v "^$"); do\n  echo "Maintenance mode pour RING: $RING"\n  ringsh supervisor ringConfigSet ${RING} join_auto 0\n  ringsh supervisor ringConfigSet ${RING} rebuild_auto 0\n  ringsh supervisor ringConfigSet ${RING} chordpurge_enable 0\ndone</pre><h3>Étape b : Vérifier l\'état du RING</h3><pre>ringsh supervisor ringStatus &lt;RING&gt;\n# Doit afficher : RUN ou CONF_MISMATCH RUN\n# JAMAIS commencer si : INCOMPLETE, SPLIT LOOP, ARC_REBUILD_NOK</pre><h3>Étape c : nodeLeave</h3><pre># Retirer tous les nodes du serveur du RING\nfor NODE in $(ringsh supervisor nodeList &lt;RING&gt; | grep storage_server_name); do\n  ringsh supervisor nodeLeave ${NODE}:/\ndone\n# Attendre que tous les nodes soient en état OUT_OF_SERVICE\nwatch -n5 "ringsh supervisor nodeList &lt;RING&gt;"</pre><h3>Étapes d-e-f : Upgrade packages</h3><pre># Sur le serveur storage (via SSH)\nsystemctl stop scality-node\n\n# Deverrouiller les packages (si RING >= 8.3.0)\nyum versionlock delete python3-scaldisk scality-node\n\n# Mettre a jour les packages Scality\nyum update --disableplugin=versionlock \\*scality\\*\nyum clean all\n\nsystemctl start scality-node</pre><h3>Étape g : nodeJoin et validation</h3><pre># Rejoindre le RING\nfor NODE in $(ringsh supervisor nodeList &lt;RING&gt; | grep storage_server_name); do\n  ringsh supervisor nodeJoin ${NODE}:/\ndone\n\n# Attendre l\'état RUN\nwatch -n5 "ringsh supervisor ringStatus &lt;RING&gt;"\n# NE PAS passer au serveur suivant avant d\'avoir RUN</pre><h3>Étape h : Appliquer la configuration de logging</h3><pre>salt-call state.apply scality.node.log\nsalt-call state.apply scality.sagentd.registered</pre><h3>Étape 17 : Sortie du mode maintenance (APRES tous les serveurs)</h3><pre>for RING in $(ringsh supervisor ringList | grep -v "^$"); do\n  ringsh supervisor ringConfigSet ${RING} join_auto 2\n  ringsh supervisor ringConfigSet ${RING} rebuild_auto 1\n  ringsh supervisor ringConfigSet ${RING} chordpurge_enable 1\ndone</pre><h2>Phase 4 — Upgrade des Connectors SOFS</h2><p>Les connectors SOFS sont upgrages <strong>en dernier</strong>, après tous les storage nodes. Règles importantes :</p><ul><li>Les connectors SOFS peuvent généralement être upgrages un par un (service continu si plusieurs connectors par volume)</li><li><strong>Exception SOFS 9.1 -> 9.2+</strong> : tous les connectors du volume doivent être arrêtés avant d\'upgrader le premier (voir matrice de compatibilite)</li><li>Avant l\'upgrade d\'un connector : vérifier que sfused et membershipd sont en état sain</li><li>Après l\'upgrade : vérifier que le volume est monté et accessible</li></ul><pre># Pre-check connector SOFS avant upgrade\nsystemctl status scality-sfused\nsystemctl status scality-membershipd\ndf -h /sofs/volume1  # vérifier le montage</pre><div class="kbox"><h3>Points Clés à Retenir</h3><ul><li>RING 7 -> RING 9 INTERDIT directement : passer par RING 8.5 obligatoirement</li><li>Ticket Scality Support OBLIGATOIRE avant de commencer</li><li>Tmux/Screen OBLIGATOIRE : une déconnexion SSH en cours d\'upgrade est catastrophique</li><li>Ordre strict : Supervisor -> Storage Servers (UN PAR UN) -> Connectors SOFS</li><li>Entre chaque storage server : attendre RUN (CONF_MISMATCH accepte, INCOMPLETE interdit)</li><li>CONF_MISMATCH post-upgrade Supervisor = NORMAL, NE PAS cliquer Apply Config</li><li>CRR pre-upgrade : obligatoire si CRR actif et upgrade depuis &lt; 9.5.2.0</li></ul></div>',
 quiz:[
@@ -8373,6 +8394,461 @@ else { select('mkdir'); }
 </body></html>`;
 MODS[MODS.findIndex(function(m){return m.id==='25';})].iframeHtmlFr=JOURNEY_HTML_SOFS_FR;
 
+var JOURNEY_HTML_S3=`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of an S3 operation</title>
+<style>
+:root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
+h1{font-size:26px;font-weight:800;margin:6px 0 8px}
+h1 em{color:var(--acc);font-style:normal}
+.lede{color:var(--t2);font-size:14px;max-width:72ch}
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 15px;border-radius:7px;
+cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc:hover{color:var(--t1);border-color:var(--t3)}
+.sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+svg{width:100%;height:auto;display:block}
+.box{fill:none;stroke:var(--line);stroke-width:1.5}
+.blabel{fill:var(--t2);font-size:12px;font-weight:700}
+.bsub{fill:var(--t3);font-size:10px}
+.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
+.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
+.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
+.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
+.node.dead{fill:#15181f;stroke:#22262f}
+.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
+.tag{fill:var(--t3);font-size:9px;font-weight:700;letter-spacing:.5px}
+.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
+.cap b{color:var(--acc)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:80ch}
+.seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
+.seen b{color:var(--t1)}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
+.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
+.fb li{margin:7px 0 7px 18px}
+@media (prefers-reduced-motion: reduce){.fb{display:block}}
+</style></head>
+<body>
+<div class="kicker">Onboarding · distributed storage internals</div>
+<h1>Anatomy of an <em>S3 operation</em></h1>
+<p class="lede">Four operations, one stack. Pick one and follow the real order of events — that order explains most production surprises.</p>
+
+<div class="ctrl"><button class="sc on" data-s="put">PUT</button><button class="sc" data-s="get">GET</button><button class="sc" data-s="del">DELETE</button><button class="sc" data-s="mpu">Multipart</button><button id="play">&#9208; pause</button></div>
+
+<div class="stage">
+<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomy of an S3 operation">
+  <path class="link" d="M145 200 H230"/>
+  <path class="link" d="M290 172 V118"/>
+  <path class="link" d="M345 215 C375 240 380 250 405 258"/>
+  <path class="link" d="M345 188 C420 150 440 110 500 92"/>
+  <path class="link" d="M465 268 H500"/>
+  <rect class="box" x="495" y="45" width="440" height="95" rx="9"/>
+  <text class="blabel" x="509" y="67">Metadata — repd</text>
+  <text class="bsub" x="509" y="83">leader + followers · Raft sessions</text>
+  <rect class="box" x="495" y="175" width="440" height="200" rx="9"/>
+  <text class="blabel" x="509" y="197">RING DATA</text>
+  <text class="bsub" x="509" y="213">ARC 7+5: 12 fragments across 12 nodes</text>
+  <rect class="node" id="client" x="35" y="174" width="110" height="52" rx="8"/>
+  <text class="ntext" x="90" y="196" text-anchor="middle">S3 client</text>
+  <text class="nsub" x="90" y="211" text-anchor="middle">SDK, aws-cli</text>
+  <rect class="node" id="cs" x="230" y="174" width="115" height="52" rx="8"/>
+  <text class="ntext" x="287" y="196" text-anchor="middle">CloudServer</text>
+  <text class="nsub" x="287" y="211" text-anchor="middle">S3 API</text>
+  <rect class="node" id="vault" x="235" y="66" width="105" height="50" rx="8"/>
+  <text class="ntext" x="287" y="87" text-anchor="middle">Vault</text>
+  <text class="nsub" x="287" y="102" text-anchor="middle">IAM · SigV4</text>
+  <rect class="node" id="sp" x="355" y="242" width="110" height="52" rx="8"/>
+  <text class="ntext" x="410" y="264" text-anchor="middle">sproxyd</text>
+  <text class="nsub" x="410" y="279" text-anchor="middle">SPLIT · ARC · Chord</text>
+  <text class="tag" x="527" y="128">leader</text>
+  <g id="raft"></g>
+  <g id="grid"></g>
+</svg>
+</div>
+
+<p class="cap" id="cap"></p>
+<div class="legend">
+  <span><i style="background:var(--meta)"></i>metadata (repd)</span>
+  <span><i style="background:var(--data)"></i>object bytes</span>
+  <span><i style="background:var(--main)"></i>authentication</span>
+  <span><i style="background:var(--ok)"></i>ack / response</span>
+</div>
+
+<div class="seen"><h3>What you just saw</h3><div id="exp"></div></div>
+<ul class="fb"><li><i>Animation disabled (reduced motion). Sequences described below.</i></li><li><b>PUT</b> — The object body reaches CloudServer · Vault verifies the SigV4 signature · The body goes to sproxyd, which encodes ARC 7+5 · 12 fragments travel to 12 distinct nodes · Bytes are acknowledged — the object exists, yet stays invisible · Only now: metadata is written to the Raft leader · The leader replicates to followers, quorum commits · 200 OK to the client</li><li><b>GET</b> — GET received by CloudServer · Vault authorises the request · Metadata read — from the Raft leader only · Fragment locations are known · 7 of 12 fragments are enough: only 7 nodes are queried · In-memory reconstruction · Streaming to the client, with backpressure</li><li><b>DELETE</b> — DELETE received, Vault authorises · A tombstone is written in the metadata · 204 No Content — immediately · The bytes are still on the disks · chordpurge flags the deleted chunks · Purge: unallocation after retention · Relocation: space is finally returned</li><li><b>Multipart</b> — CreateMultipartUpload: one entry in the shadow bucket · Each part is uploaded independently · Each part follows its own ARC path into the RING · Each part gets its own metadata entry · CompleteMultipartUpload arrives · No byte moves: only metadata is committed · The final ETag is md5 of the part md5s, suffixed -64</li></ul>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('map'), grid=document.getElementById('grid'), raft=document.getElementById('raft');
+var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
+var paused=false, token=0;
+var R=[], G=[];
+var rx=[545,625,705,785,865];
+for(var i=0;i<rx.length;i++){
+  var n=document.createElementNS(NS,'rect');
+  n.setAttribute('x',rx[i]-19); n.setAttribute('y',95); n.setAttribute('width',38); n.setAttribute('height',28);
+  n.setAttribute('rx',5); n.setAttribute('class','node'); n.setAttribute('id','r'+i);
+  raft.appendChild(n); R.push([rx[i],109]); }
+var cols=[545,640,735,830], rows=[245,300,350];
+for(var r=0;r<rows.length;r++){ for(var c=0;c<cols.length;c++){
+  var g=document.createElementNS(NS,'rect');
+  g.setAttribute('x',cols[c]-19); g.setAttribute('y',rows[r]-13); g.setAttribute('width',38); g.setAttribute('height',26);
+  g.setAttribute('rx',5); g.setAttribute('class','node'); g.setAttribute('id','g'+G.length);
+  grid.appendChild(g); G.push([cols[c],rows[r]]); }}
+var STEPS={'put':["The object body reaches CloudServer","Vault verifies the SigV4 signature","The body goes to sproxyd, which encodes ARC 7+5","12 fragments travel to 12 distinct nodes","Bytes are acknowledged — the object exists, yet stays invisible","Only now: metadata is written to the Raft leader","The leader replicates to followers, quorum commits","200 OK to the client"],
+'get':["GET received by CloudServer","Vault authorises the request","Metadata read — from the Raft leader only","Fragment locations are known","7 of 12 fragments are enough: only 7 nodes are queried","In-memory reconstruction","Streaming to the client, with backpressure"],
+'del':["DELETE received, Vault authorises","A tombstone is written in the metadata","204 No Content — immediately","The bytes are still on the disks","chordpurge flags the deleted chunks","Purge: unallocation after retention","Relocation: space is finally returned"],
+'mpu':["CreateMultipartUpload: one entry in the shadow bucket","Each part is uploaded independently","Each part follows its own ARC path into the RING","Each part gets its own metadata entry","CompleteMultipartUpload arrives","No byte moves: only metadata is committed","The final ETag is md5 of the part md5s, suffixed -64"]};
+var EXP={'put':"<b>Bytes first, metadata last.</b> Until the entry is committed in repd, the object exists for nobody — and that is deliberate. The reverse order would produce a visible object with no data: a GET would fail on a listed object, the worst of both worlds. An interrupted write leaves at most orphan fragments, which the GC reclaims.",
+'get':"Two things to remember. <b>Metadata reads go to the leader</b>, not to followers: a follower may lag, and serving a stale version would be worse than waiting. On the data side, <b>7 fragments out of 12 are enough</b> — the RING queries the fastest nodes and ignores stragglers, with no decoding at all as long as no fragment is missing.",
+'del':"<b>A 204 does not mean erased.</b> The answer is immediate because only metadata moved — a tombstone. The bytes stay on disk for the whole retention window, and space is returned only after Relocation. That lag is why a customer can delete terabytes and see no capacity change for days.",
+'mpu':"<b>Complete moves nothing.</b> The parts are already in the RING, written as they arrived; the final call merely commits a metadata entry referencing them in order. Two practical consequences: Complete is near-instant even on 5 TB, and the ETag is not the MD5 of the body — checking it after download will always fail."};
+function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
+  c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function sleep(ms){return new Promise(function(res){setTimeout(res,ms);});}
+function idle(){return new Promise(function(res){(function k(){if(!paused)return res();setTimeout(k,80);})();});}
+function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
+  function fr(ts){ if(tk!==token){try{el.remove();}catch(e){} return res();}
+    if(paused){requestAnimationFrame(fr);return;}
+    if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
+    el.setAttribute('cx',a[0]+(b[0]-a[0])*p); el.setAttribute('cy',a[1]+(b[1]-a[1])*p);
+    if(p<1)requestAnimationFrame(fr); else res(); }
+  requestAnimationFrame(fr);});}
+function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  return nxt();}
+function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
+  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.node').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
+var P={cl:[90,200], cs:[287,200], va:[287,91], sp:[410,268]};
+function toGrid(i){return [P.sp,[490,272],G[i]];}
+function fromGrid(i){return [G[i],[490,272],P.sp];}
+function toRaft(i){return [P.cs,[430,140],R[i]];}
+function run(k,tk){
+  clear();
+  var seq=Promise.resolve();
+  function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
+    cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i]; return f().then(function(){return sleep(hold||240);}); }); }
+  var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
+  var ALL=[0,1,2,3,4,5,6,7,8,9,10,11];
+  if(k==='put'){
+    st(0,function(){return travel(D,[P.cl,P.cs],520,tk);});
+    st(1,function(){lit('vault','lit-k',1500);return travel(MN,[P.cs,P.va],420,tk).then(function(){
+      return travel(OK,[P.va,P.cs],380,tk);});});
+    st(2,function(){lit('sp','lit-d',1600);return travel(D,[P.cs,P.sp],420,tk);});
+    st(3,function(){return Promise.all(ALL.map(function(g,n){ lit('g'+g,'lit-d',4200);
+      return sleep(n*70).then(function(){return travel(D,toGrid(g),620,tk,5.5);});}));},350);
+    st(4,function(){ALL.forEach(function(g){lit('g'+g,'lit-o',900);});return sleep(700);});
+    st(5,function(){lit('r0','lit-m',3000);return travel(MT,toRaft(0),640,tk);});
+    st(6,function(){return Promise.all([1,2,3,4].map(function(i,n){ lit('r'+i,'lit-m',2400);
+      return sleep(n*90).then(function(){return travel(MT,[R[0],R[i]],420,tk,5);});}));},300);
+    st(7,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-o',1200);});
+      return travel(OK,[P.cs,P.cl],520,tk);},700);
+  } else if(k==='get'){
+    st(0,function(){return travel(MT,[P.cl,P.cs],520,tk);});
+    st(1,function(){lit('vault','lit-k',1400);return travel(MN,[P.cs,P.va],400,tk).then(function(){
+      return travel(OK,[P.va,P.cs],360,tk);});});
+    st(2,function(){lit('r0','lit-m',3000);return travel(MT,toRaft(0),620,tk).then(function(){
+      return travel(MT,[R[0],[430,140],P.cs],560,tk);});});
+    st(3,function(){return sleep(320);});
+    st(4,function(){var sel=[0,2,4,5,7,9,11];
+      return Promise.all(sel.map(function(g,n){ lit('g'+g,'lit-d',3600);
+        return sleep(n*95).then(function(){return travel(D,fromGrid(g),600,tk,5.5);});}));},350);
+    st(5,function(){lit('sp','lit-d',1200);return sleep(500);});
+    st(6,function(){return travel(D,[P.sp,P.cs,P.cl],780,tk);},700);
+  } else if(k==='del'){
+    st(0,function(){lit('vault','lit-k',1300);return travel(MT,[P.cl,P.cs],460,tk).then(function(){
+      return travel(MN,[P.cs,P.va],360,tk);});});
+    st(1,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-m',3000);});
+      return travel(MT,toRaft(0),600,tk).then(function(){
+        return Promise.all([1,2,3,4].map(function(i){return travel(MT,[R[0],R[i]],380,tk,5);}));});});
+    st(2,function(){return travel(OK,[P.cs,P.cl],520,tk);});
+    st(3,function(){ALL.forEach(function(g){lit('g'+g,'lit-d',2600);});return sleep(900);},500);
+    st(4,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-d');e.classList.add('lit-k');}});return sleep(800);});
+    st(5,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k');e.classList.add('dead');}});return sleep(900);});
+    st(6,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1100);}});
+      return sleep(900);},700);
+  } else if(k==='mpu'){
+    st(0,function(){lit('r0','lit-m',2600);return travel(MT,[P.cl,P.cs],420,tk).then(function(){
+      return travel(MT,toRaft(0),600,tk);});});
+    st(1,function(){return Promise.all([0,1,2].map(function(n){
+      return sleep(n*180).then(function(){return travel(D,[P.cl,P.cs,P.sp],700,tk,5.5);});}));});
+    st(2,function(){return Promise.all([0,3,6,9,1,4,7,10].map(function(g,n){ lit('g'+g,'lit-d',3800);
+      return sleep(n*80).then(function(){return travel(D,toGrid(g),600,tk,5);});}));},300);
+    st(3,function(){lit('r1','lit-m',2400);lit('r2','lit-m',2400);
+      return Promise.all([1,2].map(function(i){return travel(MT,toRaft(i),560,tk,5);}));});
+    st(4,function(){return travel(MT,[P.cl,P.cs],480,tk);});
+    st(5,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-m',2200);});
+      return travel(MT,toRaft(0),580,tk).then(function(){
+        return Promise.all([1,2,3,4].map(function(i){return travel(MT,[R[0],R[i]],360,tk,5);}));});});
+    st(6,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-o',1200);});
+      return travel(OK,[P.cs,P.cl],520,tk);},700);
+  }
+  seq.then(function(){ if(tk===token){ return sleep(1200).then(function(){ if(tk===token) run(k,tk); }); } });
+}
+function select(k){ token++; var tk=token;
+  document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
+  exp.innerHTML=EXP[k]; run(k,tk); }
+document.querySelectorAll('.sc').forEach(function(b){
+  b.addEventListener('click',function(){select(b.dataset.s);});});
+play.addEventListener('click',function(){ paused=!paused;
+  play.innerHTML=paused?'&#9654; play':'&#9208; pause';});
+var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduced){ play.style.display='none'; cap.textContent='Animation disabled (reduced motion). Sequences described below.';
+  exp.innerHTML=EXP['put']; }
+else { select('put'); }
+})();
+<\/script>
+</body></html>`;
+MODS[MODS.findIndex(function(m){return m.id==='26';})].iframeHtml=JOURNEY_HTML_S3;
+var JOURNEY_HTML_S3_FR=`<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomie d'une opération S3</title>
+<style>
+:root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
+h1{font-size:26px;font-weight:800;margin:6px 0 8px}
+h1 em{color:var(--acc);font-style:normal}
+.lede{color:var(--t2);font-size:14px;max-width:72ch}
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 15px;border-radius:7px;
+cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc:hover{color:var(--t1);border-color:var(--t3)}
+.sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+svg{width:100%;height:auto;display:block}
+.box{fill:none;stroke:var(--line);stroke-width:1.5}
+.blabel{fill:var(--t2);font-size:12px;font-weight:700}
+.bsub{fill:var(--t3);font-size:10px}
+.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
+.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
+.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
+.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
+.node.dead{fill:#15181f;stroke:#22262f}
+.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
+.tag{fill:var(--t3);font-size:9px;font-weight:700;letter-spacing:.5px}
+.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
+.cap b{color:var(--acc)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:80ch}
+.seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
+.seen b{color:var(--t1)}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
+.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
+.fb li{margin:7px 0 7px 18px}
+@media (prefers-reduced-motion: reduce){.fb{display:block}}
+</style></head>
+<body>
+<div class="kicker">Onboarding · internals du stockage distribué</div>
+<h1>Anatomie d'une opération <em>S3</em></h1>
+<p class="lede">Quatre opérations, une seule pile. Choisissez-en une et suivez l'ordre réel des évenements — c'est lui qui explique la plupart des surprises en production.</p>
+
+<div class="ctrl"><button class="sc on" data-s="put">PUT</button><button class="sc" data-s="get">GET</button><button class="sc" data-s="del">DELETE</button><button class="sc" data-s="mpu">Multipart</button><button id="play">&#9208; pause</button></div>
+
+<div class="stage">
+<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomie d'une opération S3">
+  <path class="link" d="M145 200 H230"/>
+  <path class="link" d="M290 172 V118"/>
+  <path class="link" d="M345 215 C375 240 380 250 405 258"/>
+  <path class="link" d="M345 188 C420 150 440 110 500 92"/>
+  <path class="link" d="M465 268 H500"/>
+  <rect class="box" x="495" y="45" width="440" height="95" rx="9"/>
+  <text class="blabel" x="509" y="67">Metadata — repd</text>
+  <text class="bsub" x="509" y="83">leader + followers · sessions Raft</text>
+  <rect class="box" x="495" y="175" width="440" height="200" rx="9"/>
+  <text class="blabel" x="509" y="197">RING DATA</text>
+  <text class="bsub" x="509" y="213">ARC 7+5 : 12 fragments sur 12 nœuds</text>
+  <rect class="node" id="client" x="35" y="174" width="110" height="52" rx="8"/>
+  <text class="ntext" x="90" y="196" text-anchor="middle">Client S3</text>
+  <text class="nsub" x="90" y="211" text-anchor="middle">SDK, aws-cli</text>
+  <rect class="node" id="cs" x="230" y="174" width="115" height="52" rx="8"/>
+  <text class="ntext" x="287" y="196" text-anchor="middle">CloudServer</text>
+  <text class="nsub" x="287" y="211" text-anchor="middle">API S3</text>
+  <rect class="node" id="vault" x="235" y="66" width="105" height="50" rx="8"/>
+  <text class="ntext" x="287" y="87" text-anchor="middle">Vault</text>
+  <text class="nsub" x="287" y="102" text-anchor="middle">IAM · SigV4</text>
+  <rect class="node" id="sp" x="355" y="242" width="110" height="52" rx="8"/>
+  <text class="ntext" x="410" y="264" text-anchor="middle">sproxyd</text>
+  <text class="nsub" x="410" y="279" text-anchor="middle">SPLIT · ARC · Chord</text>
+  <text class="tag" x="527" y="128">leader</text>
+  <g id="raft"></g>
+  <g id="grid"></g>
+</svg>
+</div>
+
+<p class="cap" id="cap"></p>
+<div class="legend">
+  <span><i style="background:var(--meta)"></i>métadonnées (repd)</span>
+  <span><i style="background:var(--data)"></i>octets de l'objet</span>
+  <span><i style="background:var(--main)"></i>authentification</span>
+  <span><i style="background:var(--ok)"></i>acquittement / réponse</span>
+</div>
+
+<div class="seen"><h3>Ce que vous venez de voir</h3><div id="exp"></div></div>
+<ul class="fb"><li><i>Animation désactivée (mouvement réduit). Séquences décrites ci-dessous.</i></li><li><b>PUT</b> — Le corps de l'objet arrive sur CloudServer · Vault vérifie la signature SigV4 · Le corps part vers sproxyd, qui encode en ARC 7+5 · 12 fragments partent sur 12 nœuds distincts · Les octets sont acquittés — l'objet existe, mais reste invisible · Seulement maintenant : les métadonnées sont écrites sur le leader Raft · Le leader réplique vers les followers, le quorum valide · 200 OK au client</li><li><b>GET</b> — GET reçu par CloudServer · Vault autorise la requête · Lecture des métadonnées — sur le leader Raft uniquement · Les emplacements des fragments sont connus · 7 fragments sur 12 suffisent : seuls 7 nœuds sont sollicités · Reconstruction en mémoire · Streaming vers le client, avec backpressure</li><li><b>DELETE</b> — DELETE reçu, Vault autorise · Un tombstone est écrit dans les métadonnées · 204 No Content — immédiat · Les octets, eux, sont toujours sur les disques · chordpurge marque les chunks supprimés · Purge : désallocation après la rétention · Relocation : l'espace est enfin rendu</li><li><b>Multipart</b> — CreateMultipartUpload : une entrée dans le shadow bucket · Chaque partie est envoyée indépendamment · Chaque partie suit son propre chemin ARC vers le RING · Chaque partie a sa propre entrée de métadonnées · CompleteMultipartUpload arrive · Aucun octet ne bouge : seules les métadonnées sont commitées · L'ETag final vaut md5 des md5 des parties, suffixé -64</li></ul>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('map'), grid=document.getElementById('grid'), raft=document.getElementById('raft');
+var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
+var paused=false, token=0;
+var R=[], G=[];
+var rx=[545,625,705,785,865];
+for(var i=0;i<rx.length;i++){
+  var n=document.createElementNS(NS,'rect');
+  n.setAttribute('x',rx[i]-19); n.setAttribute('y',95); n.setAttribute('width',38); n.setAttribute('height',28);
+  n.setAttribute('rx',5); n.setAttribute('class','node'); n.setAttribute('id','r'+i);
+  raft.appendChild(n); R.push([rx[i],109]); }
+var cols=[545,640,735,830], rows=[245,300,350];
+for(var r=0;r<rows.length;r++){ for(var c=0;c<cols.length;c++){
+  var g=document.createElementNS(NS,'rect');
+  g.setAttribute('x',cols[c]-19); g.setAttribute('y',rows[r]-13); g.setAttribute('width',38); g.setAttribute('height',26);
+  g.setAttribute('rx',5); g.setAttribute('class','node'); g.setAttribute('id','g'+G.length);
+  grid.appendChild(g); G.push([cols[c],rows[r]]); }}
+var STEPS={'put':["Le corps de l'objet arrive sur CloudServer","Vault vérifie la signature SigV4","Le corps part vers sproxyd, qui encode en ARC 7+5","12 fragments partent sur 12 nœuds distincts","Les octets sont acquittés — l'objet existe, mais reste invisible","Seulement maintenant : les métadonnées sont écrites sur le leader Raft","Le leader réplique vers les followers, le quorum valide","200 OK au client"],
+'get':["GET reçu par CloudServer","Vault autorise la requête","Lecture des métadonnées — sur le leader Raft uniquement","Les emplacements des fragments sont connus","7 fragments sur 12 suffisent : seuls 7 nœuds sont sollicités","Reconstruction en mémoire","Streaming vers le client, avec backpressure"],
+'del':["DELETE reçu, Vault autorise","Un tombstone est écrit dans les métadonnées","204 No Content — immédiat","Les octets, eux, sont toujours sur les disques","chordpurge marque les chunks supprimés","Purge : désallocation après la rétention","Relocation : l'espace est enfin rendu"],
+'mpu':["CreateMultipartUpload : une entrée dans le shadow bucket","Chaque partie est envoyée indépendamment","Chaque partie suit son propre chemin ARC vers le RING","Chaque partie a sa propre entrée de métadonnées","CompleteMultipartUpload arrive","Aucun octet ne bouge : seules les métadonnées sont commitées","L'ETag final vaut md5 des md5 des parties, suffixé -64"]};
+var EXP={'put':"<b>Les octets d'abord, les métadonnées en dernier.</b> Tant que l'entrée n'est pas commitée dans repd, l'objet n'existe pour personne — et c'est voulu. L'ordre inverse produirait un objet visible sans données : un GET renverrait une erreur sur un objet listé, le pire des deux mondes. Une écriture interrompue laisse au pire des fragments orphelins, que le GC récupérera.",
+'get':"Deux choses à retenir. <b>Les lectures de métadonnées vont au leader</b>, pas aux followers : un follower peut avoir du retard, et servir une version périmée serait pire que d'attendre. Et côté données, <b>7 fragments sur 12 suffisent</b> — le RING interroge les nœuds les plus rapides et ignore les traînards, sans aucun décodage tant qu'aucun fragment ne manque.",
+'del':"<b>Un 204 ne veut pas dire effacé.</b> La réponse est immédiate parce que seule une métadonnée a bougé — un tombstone. Les octets restent sur les disques pendant toute la rétention, et l'espace n'est rendu qu'après la Relocation. C'est ce décalage qui explique qu'un client puisse supprimer des téraoctets sans voir sa capacité bouger avant plusieurs jours.",
+'mpu':"<b>Complete ne déplace rien.</b> Les parties sont déjà dans le RING, écrites au fil de l'eau ; l'opération finale se contente de commiter une entrée de métadonnées qui les référence dans l'ordre. D'où deux conséquences pratiques : Complete est quasi instantané même sur 5 To, et l'ETag n'est pas le MD5 du corps — le vérifier après téléchargement échouera toujours."};
+function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
+  c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function sleep(ms){return new Promise(function(res){setTimeout(res,ms);});}
+function idle(){return new Promise(function(res){(function k(){if(!paused)return res();setTimeout(k,80);})();});}
+function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
+  function fr(ts){ if(tk!==token){try{el.remove();}catch(e){} return res();}
+    if(paused){requestAnimationFrame(fr);return;}
+    if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
+    el.setAttribute('cx',a[0]+(b[0]-a[0])*p); el.setAttribute('cy',a[1]+(b[1]-a[1])*p);
+    if(p<1)requestAnimationFrame(fr); else res(); }
+  requestAnimationFrame(fr);});}
+function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  return nxt();}
+function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
+  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.node').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
+var P={cl:[90,200], cs:[287,200], va:[287,91], sp:[410,268]};
+function toGrid(i){return [P.sp,[490,272],G[i]];}
+function fromGrid(i){return [G[i],[490,272],P.sp];}
+function toRaft(i){return [P.cs,[430,140],R[i]];}
+function run(k,tk){
+  clear();
+  var seq=Promise.resolve();
+  function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
+    cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i]; return f().then(function(){return sleep(hold||240);}); }); }
+  var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
+  var ALL=[0,1,2,3,4,5,6,7,8,9,10,11];
+  if(k==='put'){
+    st(0,function(){return travel(D,[P.cl,P.cs],520,tk);});
+    st(1,function(){lit('vault','lit-k',1500);return travel(MN,[P.cs,P.va],420,tk).then(function(){
+      return travel(OK,[P.va,P.cs],380,tk);});});
+    st(2,function(){lit('sp','lit-d',1600);return travel(D,[P.cs,P.sp],420,tk);});
+    st(3,function(){return Promise.all(ALL.map(function(g,n){ lit('g'+g,'lit-d',4200);
+      return sleep(n*70).then(function(){return travel(D,toGrid(g),620,tk,5.5);});}));},350);
+    st(4,function(){ALL.forEach(function(g){lit('g'+g,'lit-o',900);});return sleep(700);});
+    st(5,function(){lit('r0','lit-m',3000);return travel(MT,toRaft(0),640,tk);});
+    st(6,function(){return Promise.all([1,2,3,4].map(function(i,n){ lit('r'+i,'lit-m',2400);
+      return sleep(n*90).then(function(){return travel(MT,[R[0],R[i]],420,tk,5);});}));},300);
+    st(7,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-o',1200);});
+      return travel(OK,[P.cs,P.cl],520,tk);},700);
+  } else if(k==='get'){
+    st(0,function(){return travel(MT,[P.cl,P.cs],520,tk);});
+    st(1,function(){lit('vault','lit-k',1400);return travel(MN,[P.cs,P.va],400,tk).then(function(){
+      return travel(OK,[P.va,P.cs],360,tk);});});
+    st(2,function(){lit('r0','lit-m',3000);return travel(MT,toRaft(0),620,tk).then(function(){
+      return travel(MT,[R[0],[430,140],P.cs],560,tk);});});
+    st(3,function(){return sleep(320);});
+    st(4,function(){var sel=[0,2,4,5,7,9,11];
+      return Promise.all(sel.map(function(g,n){ lit('g'+g,'lit-d',3600);
+        return sleep(n*95).then(function(){return travel(D,fromGrid(g),600,tk,5.5);});}));},350);
+    st(5,function(){lit('sp','lit-d',1200);return sleep(500);});
+    st(6,function(){return travel(D,[P.sp,P.cs,P.cl],780,tk);},700);
+  } else if(k==='del'){
+    st(0,function(){lit('vault','lit-k',1300);return travel(MT,[P.cl,P.cs],460,tk).then(function(){
+      return travel(MN,[P.cs,P.va],360,tk);});});
+    st(1,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-m',3000);});
+      return travel(MT,toRaft(0),600,tk).then(function(){
+        return Promise.all([1,2,3,4].map(function(i){return travel(MT,[R[0],R[i]],380,tk,5);}));});});
+    st(2,function(){return travel(OK,[P.cs,P.cl],520,tk);});
+    st(3,function(){ALL.forEach(function(g){lit('g'+g,'lit-d',2600);});return sleep(900);},500);
+    st(4,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-d');e.classList.add('lit-k');}});return sleep(800);});
+    st(5,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k');e.classList.add('dead');}});return sleep(900);});
+    st(6,function(){ALL.forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1100);}});
+      return sleep(900);},700);
+  } else if(k==='mpu'){
+    st(0,function(){lit('r0','lit-m',2600);return travel(MT,[P.cl,P.cs],420,tk).then(function(){
+      return travel(MT,toRaft(0),600,tk);});});
+    st(1,function(){return Promise.all([0,1,2].map(function(n){
+      return sleep(n*180).then(function(){return travel(D,[P.cl,P.cs,P.sp],700,tk,5.5);});}));});
+    st(2,function(){return Promise.all([0,3,6,9,1,4,7,10].map(function(g,n){ lit('g'+g,'lit-d',3800);
+      return sleep(n*80).then(function(){return travel(D,toGrid(g),600,tk,5);});}));},300);
+    st(3,function(){lit('r1','lit-m',2400);lit('r2','lit-m',2400);
+      return Promise.all([1,2].map(function(i){return travel(MT,toRaft(i),560,tk,5);}));});
+    st(4,function(){return travel(MT,[P.cl,P.cs],480,tk);});
+    st(5,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-m',2200);});
+      return travel(MT,toRaft(0),580,tk).then(function(){
+        return Promise.all([1,2,3,4].map(function(i){return travel(MT,[R[0],R[i]],360,tk,5);}));});});
+    st(6,function(){[0,1,2,3,4].forEach(function(i){lit('r'+i,'lit-o',1200);});
+      return travel(OK,[P.cs,P.cl],520,tk);},700);
+  }
+  seq.then(function(){ if(tk===token){ return sleep(1200).then(function(){ if(tk===token) run(k,tk); }); } });
+}
+function select(k){ token++; var tk=token;
+  document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
+  exp.innerHTML=EXP[k]; run(k,tk); }
+document.querySelectorAll('.sc').forEach(function(b){
+  b.addEventListener('click',function(){select(b.dataset.s);});});
+play.addEventListener('click',function(){ paused=!paused;
+  play.innerHTML=paused?'&#9654; lecture':'&#9208; pause';});
+var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduced){ play.style.display='none'; cap.textContent='Animation désactivée (mouvement réduit). Séquences décrites ci-dessous.';
+  exp.innerHTML=EXP['put']; }
+else { select('put'); }
+})();
+<\/script>
+</body></html>`;
+MODS[MODS.findIndex(function(m){return m.id==='26';})].iframeHtmlFr=JOURNEY_HTML_S3_FR;
+
 
 var state={view:'home',tab:'theory',modIdx:0,scores:{},answers:{},lang:localStorage.getItem('ringLang')||'fr',fileHandle:null};
 (function(){
@@ -8489,8 +8965,8 @@ function showTab(tab){
   document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
-var SIDEBAR_ORDER=['01','02','03','07','04','10','24','25','12','15','17','20','21','22','23','14','16','05','06','08','13','09','11','18','19'];
-var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','24':'SOFS','25':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers','20':'Anatomie des opérations S3','21':'Anatomie des opérations S3','22':'Anatomie des opérations S3','23':'Anatomie des opérations S3'};
+var SIDEBAR_ORDER=['01','02','03','07','04','10','24','25','12','15','17','26','20','21','22','23','14','16','05','06','08','13','09','11','18','19'];
+var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','24':'SOFS','25':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers','26':'Anatomie des opérations S3','20':'Anatomie des opérations S3','21':'Anatomie des opérations S3','22':'Anatomie des opérations S3','23':'Anatomie des opérations S3'};
 
 
 var SIDEBAR_GROUPS_EN={"Architecture RING": "RING Architecture", "SOFS": "SOFS", "S3 Connector": "S3 Connector", "CRR & Multi-site DR": "CRR & Multi-site DR", "Exploitation du RING": "RING Operations", "Administration": "Administration", "Composants Tiers": "Third-party Components", "Anatomie des opérations S3": "S3 Operations Anatomy"};
