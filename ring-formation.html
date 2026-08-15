@@ -574,6 +574,27 @@ quiz_en:[
   {q:"After an rm on a SOFS volume with Recycle disabled, when is disk space actually returned?",opts:["Immediately, when the MESA transaction commits","After the Garbage Collector runs","After the Purge, i.e. a seven-day default retention","After the Relocation, which rewrites the DAT files once the Purge has run"],ans:3,expl:"The MESA transaction removes the entry, the GC processes deletion lists asynchronously, the Purge unallocates after a seven-day default retention, and it is the Relocation that actually returns space by rewriting the DAT files."},
   {q:"Why are membershipd and the DLM mandatory as soon as several connectors mount the same volume?",opts:["To balance network load across connectors","To keep the registry of active connectors and arbitrate file locks, without which concurrent writes corrupt data","To synchronise read caches","To allow virtual IP failover"],ans:1,expl:"membershipd registers the connector with ZooKeeper and the DLM arbitrates locks across connectors. The VIP is handled by CTDB, a separate mechanism on the SMB side."}
 ]},
+{id:'25',num:'25',title:'SOFS — Anatomie animée',desc:'mkdir, écriture, ls, lecture, écriture partielle, rm : la même carte, six chorégraphies',
+content:'<p>Chargement...</p>',
+quiz:[
+  {q:"Dans l'animation, que se passe-t-il dans le RING DATA lors d'un mkdir ?",opts:["Un objet vide est créé pour matérialiser le répertoire","Rien : la grille reste éteinte, c'est une transaction MESA seule","Un chunk d'index est écrit sur chaque nœud","Le main chunk du répertoire part en CoS 4"],ans:1,expl:"Créer un répertoire ne stocke aucun octet. Seuls les nœuds MESA s'allument, le temps d'une transaction atomique — inode du répertoire, puis entrée dans le parent, puis commit."},
+  {q:"Lors de l'écriture d'un fichier, pourquoi trois couleurs différentes partent-elles vers le RING DATA ?",opts:["Une couleur par réplica","Un fichier sparse assemble trois natures d'objets : main chunk, pages b-tree et stripes","Une couleur par protocole d'accès","Les couleurs indiquent la priorité d'écriture"],ans:1,expl:"Le main chunk (CoS 4), les pages b-tree qui indexent le fichier (CoS 2) et les stripes de contenu de 128 Ko (CoS 2) sont trois objets distincts, avec chacun sa Class of Service par défaut."},
+  {q:"Sur la lecture partielle, trois nœuds s'allument sur quinze. Pourquoi pas davantage ?",opts:["Les autres nœuds sont en panne","Les pages b-tree permettent d'identifier les seules stripes couvrant la plage demandée","Le cache du connector sert le reste","La lecture est limitée à trois nœuds par défaut"],ans:1,expl:"C'est tout l'intérêt de l'index b-tree : localiser la plage demandée et ne solliciter que les stripes concernées. Avec un cache de type stripe, on peut même ne lire que des portions de stripes."},
+  {q:"Qu'est-ce que le scénario « écriture partielle » démontre par contraste avec S3 ?",opts:["Que SOFS est plus rapide que S3","Que seules les stripes touchées sont réécrites, alors qu'en S3 l'objet immuable est réécrit en entier","Que S3 ne sait pas écrire au milieu d'un fichier car il manque de verrous","Que SOFS réplique moins que S3"],ans:1,expl:"Deux stripes bougent, le reste du fichier est intact. En S3, le même geste réécrit tout l'objet — c'est la différence de fond entre fichier et objet, et la raison pour laquelle NFS sur S3 n'accepte pas les mises à jour partielles."},
+  {q:"Dans le scénario rm, quelle étape rend réellement l'espace disque ?",opts:["La transaction MESA qui supprime l'entrée","Le Garbage Collector","La Purge, après 7 jours de rétention","La Relocation, qui réécrit les fichiers DAT après la Purge"],ans:3,expl:"Les nœuds s'éteignent en trois temps dans l'animation : le GC traite les listes de suppression, la Purge désalloue après la rétention, et c'est la Relocation qui réécrit les fichiers DAT et rend l'espace."},
+  {q:"Quel scénario n'allume que la zone RING META, sans jamais toucher le RING DATA ?",opts:["ls -l","La lecture partielle","L'écriture","rm"],ans:0,expl:"Taille, droits, horodatages et arborescence vivent tous dans MESA. C'est ce qui justifie les SSD dédiés aux métadonnées SOFS : un ls -R est un déluge de petites lectures aléatoires."}
+],
+title_en:'SOFS — Animated anatomy',
+desc_en:'mkdir, write, ls, read, partial write, rm: one map, six choreographies',
+content_en:'<p>Loading...</p>',
+quiz_en:[
+  {q:"In the animation, what happens in the DATA RING during a mkdir?",opts:["An empty object is created to materialise the directory","Nothing: the grid stays dark, it is a MESA transaction only","An index chunk is written to every node","The directory main chunk goes out at CoS 4"],ans:1,expl:"Creating a directory stores no bytes. Only the MESA nodes light up, for the duration of an atomic transaction — directory inode, then parent entry, then commit."},
+  {q:"When a file is written, why do three different colours travel to the DATA RING?",opts:["One colour per replica","A sparse file assembles three kinds of objects: main chunk, b-tree pages and stripes","One colour per access protocol","Colours indicate write priority"],ans:1,expl:"The main chunk (CoS 4), the b-tree pages indexing the file (CoS 2) and the 128 KB content stripes (CoS 2) are three distinct objects, each with its own default Class of Service."},
+  {q:"On the partial read, three nodes out of fifteen light up. Why not more?",opts:["The other nodes are down","The b-tree pages identify only the stripes covering the requested range","The connector cache serves the rest","Reads are limited to three nodes by default"],ans:1,expl:"That is the whole point of the b-tree index: locate the requested range and touch only the stripes concerned. With a stripe cache you can even read parts of stripes."},
+  {q:"What does the partial write scenario demonstrate by contrast with S3?",opts:["That SOFS is faster than S3","That only the affected stripes are rewritten, whereas on S3 the immutable object is rewritten in full","That S3 cannot write mid-file because it lacks locks","That SOFS replicates less than S3"],ans:1,expl:"Two stripes move, the rest of the file is untouched. On S3 the same gesture rewrites the whole object — the fundamental file versus object difference, and the reason NFS on S3 rejects partial updates."},
+  {q:"In the rm scenario, which step actually returns disk space?",opts:["The MESA transaction removing the entry","The Garbage Collector","The Purge, after a seven-day retention","The Relocation, which rewrites the DAT files after the Purge"],ans:3,expl:"The nodes go dark in three stages in the animation: the GC processes deletion lists, the Purge unallocates after retention, and it is the Relocation that rewrites the DAT files and returns the space."},
+  {q:"Which scenario lights up the RING META zone only, never touching the DATA RING?",opts:["ls -l","The partial read","The write","rm"],ans:0,expl:"Size, permissions, timestamps and tree structure all live in MESA. That is what justifies dedicated SSDs for SOFS metadata: an ls -R is a flood of small random reads."}
+]},
 {id:'11',num:'11',title:'Procédure d\'Upgrade RING',desc:'Prerequis, chemins de version, sequence Supervisor -> Storage -> Connectors',
 content:'<h2>Principes Fondamentaux de l\'Upgrade RING</h2><p>Un upgrade RING est une <strong>opération critique</strong> qui doit être planifiée rigoureusement. La règle d\'or : <strong>un seul composant a la fois, dans l\'ordre prescrit, avec validation a chaque étape</strong>. Un upgrade mal exécute peut causer une interruption de service ou, dans les cas extremes, une perte de données.</p><h2>Matrice de Compatibilite des Versions</h2><div class="alert alert-d">Upgrade direct RING 7 vers RING 9 : STRICTEMENT INTERDIT. La base de données MESA et le format des containers Biziod ont change de façon incompatible entre RING 7 et RING 9. Un upgrade direct corromprait les données.</div><table><tr><th>Version source</th><th>Version cible</th><th>Chemin</th></tr><tr><td>RING 7.x</td><td>RING 9.x</td><td>INTERDIT direct. Aller RING 7 -> RING 8 -> RING 9</td></tr><tr><td>RING 8.x</td><td>RING 9.5.2</td><td>Direct supporte</td></tr><tr><td>RING 9.0 - 9.4</td><td>RING 9.5.2</td><td>Direct supporte</td></tr><tr><td>SOFS connectors &lt; 8.5.8.7</td><td>RING 9</td><td>Upgrade intermédiaire obligatoire vers 8.5.8.7 d\'abord</td></tr><tr><td>SOFS connectors 9.0 ou 9.1</td><td>RING 9.2+</td><td>Arrêter TOUS les connectors du volume avant d\'upgrader le premier</td></tr></table><h3>Cas special SOFS 9.0/9.1 -> 9.2+</h3><p>Entre RING 9.1 et 9.2, le <strong>format de stockage des métadonnées SOFS a change</strong>. Un connector 9.1 et un connector 9.2 sur le même volume sont incompatibles. La procédure est :</p><ol><li>Arrêter TOUS les connectors SOFS du volume simultanément</li><li>Upgrader tous les connectors en une seule fenêtre de maintenance</li><li>Redémarrer tous les connectors</li></ol><h2>Prerequis — Checklist Pre-Upgrade</h2><h3>1. Ticket Scality Support (OBLIGATOIRE)</h3><p>Avant tout upgrade, <strong>ouvrir un ticket Scality Support</strong> est OBLIGATOIRE. L\'équipe Support :</p><ul><li>Valide que l\'environnement est pret pour l\'upgrade (version courante, OS, espace disque)</li><li>Confirme le chemin de version exact (pas d\'étape intermédiaire oubliée)</li><li>Est disponible pour assister en cas de problème pendant l\'upgrade</li></ul><h3>2. Terminal persistant (Tmux ou Screen)</h3><p>Une déconnexion SSH en milieu d\'upgrade est catastrophique. Tmux et Screen maintiennent la session active même si la connexion est interrompue :</p><pre># Demarrer une session tmux\ntmux new -s upgrade\n\n# Se rattacher après déconnexion\ntmux attach -t upgrade\n\n# Ou avec Screen\nscreen -S upgrade\nscreen -r upgrade  # rattachement</pre><h3>3. Vérifications pre-upgrade</h3><pre># Vérifier le RING est en état RUN\nringsh supervisor ringList\nringsh supervisor ringStatus &lt;RING&gt;\n\n# Vérifier l\'espace /var\ndf -h /var\n\n# Vérifier PermitRootLogin\ngrep PermitRootLogin /etc/ssh/sshd_config\n\n# Vérifier la version scaldisk (doit = version RING courante)\nscaldisk --version</pre><h3>4. Cas CRR pre-upgrade</h3><div class="alert alert-w">Si le Cross-Region Réplication (CRR) est active sur le S3 Connector ET que vous upgradez depuis une version &lt; 9.5.2.0, une <strong>procédure de pre-upgrade CRR obligatoire</strong> doit être exécutée. Elle vide les queues de réplication en attente avant l\'upgrade pour éviter toute corruption. Contacter Scality Support pour la procédure exacte.</div><h2>Sequence Complete d\'Upgrade</h2><div class="adiag">PHASE 1 : PREPARATION\n  1. Vérifier versions + matrice de compatibilite\n  2. Ouvrir ticket Scality Support\n  3. Exécuter CRR pre-upgrade si applicable\n  4. Ouvrir terminal Tmux/Screen\n  5. Vérifier état RING : RUN obligatoire\n  6. Telecharger archive .run + vérifier sha256\n  7. Uploader sur le Supervisor\n  8. chmod +x installer.run\n  9. FORCE_PY3=1 ./installer.run -y --extract-only\n 10. Vérifier rôle Prometheus (si upgrade depuis &lt; 9.5.0)\n 11. /srv/scality/bin/precheck_upgrade --offline\n 12. Migration SSO si upgrade depuis &lt; 9.4.0.0\n\nPHASE 2 : UPGRADE SUPERVISOR\n 13. /srv/scality/scripts/prépare_upgrade\n     -> Attendre : "prépare_upgrade completed successfully"\n 14. salt \'*\' state.sls scality.req.platform.kernel\n     -> Met a jour les paramètres kernel sysctl sur tous les serveurs\n 15. /srv/scality/scripts/supervisor_upgrade\n     -> Attendre : "supervisor_upgrade completed successfully"\n     -> Le Supervisor redémarre\n     -> L\'UI affiche CONF_MISMATCH -> NORMAL, NE PAS CLIQUER Apply Config\n\nPHASE 3 : UPGRADE STORAGE SERVERS (un par un)\n 16. Pour chaque storage server :\n     a. Entrer en mode maintenance (tous les RINGs)\n     b. Vérifier état RING : RUN ou CONF_MISMATCH uniquement\n     c. nodeLeave -> attendre état OUT_OF_SERVICE\n     d. systemctl stop scality-node\n     e. yum update packages scality\n     f. systemctl start scality-node\n     g. nodeJoin -> attendre état RUN\n     h. Appliquer logging + sagentd\n     i. Passer au serveur SUIVANT seulement si RUN\n 17. Exit maintenance mode (tous les RINGs)\n\nPHASE 4 : UPGRADE CONNECTORS SOFS (si applicable)</div><h2>Phase 3 — Upgrade d\'un Storage Server en Detail</h2><h3>Étape a : Mode maintenance</h3><pre># Pour CHAQUE RING du cluster\nfor RING in $(ringsh supervisor ringList | grep -v "^$"); do\n  echo "Maintenance mode pour RING: $RING"\n  ringsh supervisor ringConfigSet ${RING} join_auto 0\n  ringsh supervisor ringConfigSet ${RING} rebuild_auto 0\n  ringsh supervisor ringConfigSet ${RING} chordpurge_enable 0\ndone</pre><h3>Étape b : Vérifier l\'état du RING</h3><pre>ringsh supervisor ringStatus &lt;RING&gt;\n# Doit afficher : RUN ou CONF_MISMATCH RUN\n# JAMAIS commencer si : INCOMPLETE, SPLIT LOOP, ARC_REBUILD_NOK</pre><h3>Étape c : nodeLeave</h3><pre># Retirer tous les nodes du serveur du RING\nfor NODE in $(ringsh supervisor nodeList &lt;RING&gt; | grep storage_server_name); do\n  ringsh supervisor nodeLeave ${NODE}:/\ndone\n# Attendre que tous les nodes soient en état OUT_OF_SERVICE\nwatch -n5 "ringsh supervisor nodeList &lt;RING&gt;"</pre><h3>Étapes d-e-f : Upgrade packages</h3><pre># Sur le serveur storage (via SSH)\nsystemctl stop scality-node\n\n# Deverrouiller les packages (si RING >= 8.3.0)\nyum versionlock delete python3-scaldisk scality-node\n\n# Mettre a jour les packages Scality\nyum update --disableplugin=versionlock \\*scality\\*\nyum clean all\n\nsystemctl start scality-node</pre><h3>Étape g : nodeJoin et validation</h3><pre># Rejoindre le RING\nfor NODE in $(ringsh supervisor nodeList &lt;RING&gt; | grep storage_server_name); do\n  ringsh supervisor nodeJoin ${NODE}:/\ndone\n\n# Attendre l\'état RUN\nwatch -n5 "ringsh supervisor ringStatus &lt;RING&gt;"\n# NE PAS passer au serveur suivant avant d\'avoir RUN</pre><h3>Étape h : Appliquer la configuration de logging</h3><pre>salt-call state.apply scality.node.log\nsalt-call state.apply scality.sagentd.registered</pre><h3>Étape 17 : Sortie du mode maintenance (APRES tous les serveurs)</h3><pre>for RING in $(ringsh supervisor ringList | grep -v "^$"); do\n  ringsh supervisor ringConfigSet ${RING} join_auto 2\n  ringsh supervisor ringConfigSet ${RING} rebuild_auto 1\n  ringsh supervisor ringConfigSet ${RING} chordpurge_enable 1\ndone</pre><h2>Phase 4 — Upgrade des Connectors SOFS</h2><p>Les connectors SOFS sont upgrages <strong>en dernier</strong>, après tous les storage nodes. Règles importantes :</p><ul><li>Les connectors SOFS peuvent généralement être upgrages un par un (service continu si plusieurs connectors par volume)</li><li><strong>Exception SOFS 9.1 -> 9.2+</strong> : tous les connectors du volume doivent être arrêtés avant d\'upgrader le premier (voir matrice de compatibilite)</li><li>Avant l\'upgrade d\'un connector : vérifier que sfused et membershipd sont en état sain</li><li>Après l\'upgrade : vérifier que le volume est monté et accessible</li></ul><pre># Pre-check connector SOFS avant upgrade\nsystemctl status scality-sfused\nsystemctl status scality-membershipd\ndf -h /sofs/volume1  # vérifier le montage</pre><div class="kbox"><h3>Points Clés à Retenir</h3><ul><li>RING 7 -> RING 9 INTERDIT directement : passer par RING 8.5 obligatoirement</li><li>Ticket Scality Support OBLIGATOIRE avant de commencer</li><li>Tmux/Screen OBLIGATOIRE : une déconnexion SSH en cours d\'upgrade est catastrophique</li><li>Ordre strict : Supervisor -> Storage Servers (UN PAR UN) -> Connectors SOFS</li><li>Entre chaque storage server : attendre RUN (CONF_MISMATCH accepte, INCOMPLETE interdit)</li><li>CONF_MISMATCH post-upgrade Supervisor = NORMAL, NE PAS cliquer Apply Config</li><li>CRR pre-upgrade : obligatoire si CRR actif et upgrade depuis &lt; 9.5.2.0</li></ul></div>',
 quiz:[
@@ -7923,6 +7944,435 @@ secs.forEach(s=>io2.observe(s));
 `;
 MODS[MODS.findIndex(function(m){return m.id==='23';})].iframeHtmlFr=JOURNEY_HTML_MPU_FR;
 
+var JOURNEY_HTML_SOFS=`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomy of a SOFS operation</title>
+<style>
+:root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
+h1{font-size:26px;font-weight:800;margin:6px 0 8px}
+h1 em{color:var(--acc);font-style:normal}
+.lede{color:var(--t2);font-size:14px;max-width:70ch}
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;
+cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc:hover{color:var(--t1);border-color:var(--t3)}
+.sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+svg{width:100%;height:auto;display:block}
+.box{fill:none;stroke:var(--line);stroke-width:1.5;rx:9}
+.blabel{fill:var(--t2);font-size:12px;font-weight:700}
+.bsub{fill:var(--t3);font-size:10px}
+.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
+.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
+.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
+.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
+.node.dead{fill:#15181f;stroke:#22262f}
+.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
+.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
+.cap b{color:var(--acc)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:78ch}
+.seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
+.seen b{color:var(--t1)}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
+.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
+.fb li{margin:7px 0 7px 18px}
+@media (prefers-reduced-motion: reduce){.fb{display:block}}
+</style></head>
+<body>
+<div class="kicker">Onboarding · distributed storage internals</div>
+<h1>Anatomy of a <em>SOFS operation</em></h1>
+<p class="lede">Six POSIX calls, one infrastructure. Pick a call and watch what lights up — and above all what stays dark.</p>
+
+<div class="ctrl"><button class="sc on" data-s="mkdir">mkdir</button><button class="sc" data-s="write">write</button><button class="sc" data-s="ls">ls -l</button><button class="sc" data-s="read">read</button><button class="sc" data-s="partial">partial write</button><button class="sc" data-s="rm">rm</button><button id="play">&#9208; pause</button></div>
+
+<div class="stage">
+<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomy of a SOFS operation">
+  <path class="link" d="M150 200 H260"/>
+  <path class="link" d="M370 180 C440 120 470 90 545 82"/>
+  <path class="link" d="M370 220 C440 250 470 260 570 265"/>
+  <rect class="box" x="520" y="35" width="300" height="95" rx="9"/>
+  <text class="blabel" x="534" y="57">RING META — MESA</text>
+  <text class="bsub" x="534" y="73">directories + inodes · CoS 4+ · SSD</text>
+  <rect class="box" x="520" y="165" width="380" height="205" rx="9"/>
+  <text class="blabel" x="534" y="188">RING DATA</text>
+  <text class="bsub" x="534" y="204">main chunk · b-tree pages · 128 KB stripes</text>
+  <rect class="node" id="app" x="40" y="172" width="110" height="56" rx="8"/>
+  <text class="ntext" x="95" y="196" text-anchor="middle">Application</text>
+  <text class="nsub" x="95" y="212" text-anchor="middle">POSIX</text>
+  <rect class="node" id="sfused" x="260" y="172" width="110" height="56" rx="8"/>
+  <text class="ntext" x="315" y="196" text-anchor="middle">sfused</text>
+  <text class="nsub" x="315" y="212" text-anchor="middle">SOFS daemon</text>
+  <g id="grid"></g>
+</svg>
+</div>
+
+<p class="cap" id="cap"></p>
+<div class="legend">
+  <span><i style="background:var(--meta)"></i>MESA metadata</span>
+  <span><i style="background:var(--data)"></i>content stripe</span>
+  <span><i style="background:var(--main)"></i>main chunk / b-tree page</span>
+  <span><i style="background:var(--ok)"></i>commit / ack</span>
+</div>
+
+<div class="seen"><h3>What you just saw</h3><div id="exp"></div></div>
+<ul class="fb"><li><i>Animation disabled (reduced motion). Sequence described below.</i></li><li><b>mkdir</b> — The call enters sfused · MESA transaction: the directory inode is created · The entry is added to the parent directory · Commit — or full rollback</li><li><b>write</b> — Content enters sfused · Inode mode chosen by name pattern · The main chunk goes out at CoS 4 · Content is cut into 128 KB stripes · Each stripe is above the 60,000-byte threshold, so it goes to ARC · B-tree pages index the stripes · The index is committed in MESA</li><li><b>ls -l</b> — The call enters sfused · Inode and directory read from MESA · Size, permissions, timestamps: all there · Answer returned to the application</li><li><b>read</b> — Inode read from MESA · B-tree pages walked · Only the stripes covering the range are identified · GET on those stripes only · Assembly and response</li><li><b>partial write</b> — 4 KB written in the middle of a 10 GB file · MESA locates the affected stripes · Two stripes are rewritten · The index is updated</li><li><b>rm</b> — MESA transaction: entry and inode are gone · Chunks are flagged as deleted · GC — deletion lists go out asynchronously · Purge — unallocation after a seven-day retention · Relocation — disk space is finally returned</li></ul>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('map'), grid=document.getElementById('grid');
+var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
+var paused=false, token=0, cur='mkdir';
+var M=[[560,82],[620,82],[680,82],[740,82]];
+var G=[];
+var cols=[570,640,710,780,850], rows=[240,290,340];
+for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+  var n=document.createElementNS(NS,'rect');
+  n.setAttribute('x',cols[c]-16); n.setAttribute('y',rows[r]-13);
+  n.setAttribute('width',32); n.setAttribute('height',26); n.setAttribute('rx',5);
+  n.setAttribute('class','node'); n.setAttribute('id','g'+G.length);
+  grid.appendChild(n); G.push([cols[c],rows[r]]);
+}}
+for(var i=0;i<M.length;i++){
+  var m=document.createElementNS(NS,'rect');
+  m.setAttribute('x',M[i][0]-16); m.setAttribute('y',M[i][1]-13);
+  m.setAttribute('width',32); m.setAttribute('height',26); m.setAttribute('rx',5);
+  m.setAttribute('class','node'); m.setAttribute('id','m'+i);
+  svg.insertBefore(m,grid); }
+var STEPS={'mkdir':["The call enters sfused","MESA transaction: the directory inode is created","The entry is added to the parent directory","Commit — or full rollback"],
+'write':["Content enters sfused","Inode mode chosen by name pattern","The main chunk goes out at CoS 4","Content is cut into 128 KB stripes","Each stripe is above the 60,000-byte threshold, so it goes to ARC","B-tree pages index the stripes","The index is committed in MESA"],
+'ls':["The call enters sfused","Inode and directory read from MESA","Size, permissions, timestamps: all there","Answer returned to the application"],
+'read':["Inode read from MESA","B-tree pages walked","Only the stripes covering the range are identified","GET on those stripes only","Assembly and response"],
+'partial':["4 KB written in the middle of a 10 GB file","MESA locates the affected stripes","Two stripes are rewritten","The index is updated"],
+'rm':["MESA transaction: entry and inode are gone","Chunks are flagged as deleted","GC — deletion lists go out asynchronously","Purge — unallocation after a seven-day retention","Relocation — disk space is finally returned"]};
+var EXP={'mkdir':"<b>The DATA RING stayed dark.</b> Creating a directory stores no bytes: it is a MESA transaction, atomic end to end. That atomicity is what guarantees a directory never exists half-created, even when several connectors write into the same tree.",
+'write':"A file is not a single object: a <b>main chunk</b> (CoS 4), <b>b-tree pages</b> indexing it (CoS 2) and <b>stripes</b> of 131,072 bytes (CoS 2). A stripe is above <code>replication_size_threshold</code>, so it goes to erasure coding; the tiny pages stay replicated. Both destinations work in parallel.",
+'ls':"<b>Not one request to the DATA RING.</b> That is the whole point of dedicated metadata SSDs: an <code>ls -R</code> over a large volume is a flood of small random reads, exactly what a spinning disk handles badly.",
+'read':"Three nodes out of twelve light up. The b-tree pages exist so that <b>only</b> the useful stripes are requested. With a <code>stripe</code> cache you go one step further: reading parts of stripes rather than whole stripes.",
+'partial':"<b>The point that separates a file from an object.</b> Two stripes move, the rest of the file does not. On S3 the object is immutable: the same gesture rewrites all 10 GB. It is also why NFS on S3 does not support partial updates.",
+'rm':"The answer to the application is immediate, the reclaim is not. Three distinct tasks follow one another, and it is <b>Relocation</b> that actually returns space by rewriting the DAT files — neither the GC nor the Purge. During the retention window an Undelete remains possible."};
+function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
+  c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function sleep(ms){return new Promise(function(res){setTimeout(res,ms);});}
+function idle(){return new Promise(function(res){(function k(){if(!paused)return res();setTimeout(k,80);})();});}
+function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
+  function fr(ts){ if(tk!==token){try{el.remove();}catch(e){} return res();}
+    if(paused){requestAnimationFrame(fr);return;}
+    if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
+    el.setAttribute('cx',a[0]+(b[0]-a[0])*p); el.setAttribute('cy',a[1]+(b[1]-a[1])*p);
+    if(p<1)requestAnimationFrame(fr); else res(); }
+  requestAnimationFrame(fr);});}
+function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  return nxt();}
+function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
+  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.node').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
+function say(k,i){cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i];}
+var P={app:[95,200], sf:[315,200]};
+function toMeta(i){return [P.sf,[440,140],M[i]];}
+function toData(i){return [P.sf,[470,250],G[i]];}
+function fromData(i){return [G[i],[470,250],P.sf];}
+function run(k,tk){
+  clear();
+  var seq=Promise.resolve();
+  function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
+    say(k,i); return f().then(function(){ return sleep(hold||260); }); }); }
+  var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
+  if(k==='mkdir'){
+    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toMeta(0),700,tk);});
+    st(2,function(){lit('m1','lit-m',2000);return travel(MT,toMeta(1),700,tk);});
+    st(3,function(){lit('m0','lit-o',1400);lit('m1','lit-o',1400);return sleep(700);},600);
+  } else if(k==='write'){
+    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('sfused','lit-k',900);return sleep(500);});
+    st(2,function(){lit('g0','lit-k',3600);return travel(MN,toData(0),650,tk,7.5);});
+    st(3,function(){return sleep(300);});
+    st(4,function(){var a=[];[3,4,6,8,9,11,12,14].forEach(function(g,n){
+        lit('g'+g,'lit-d',3200); a.push(sleep(n*90).then(function(){return travel(D,toData(g),620,tk,5.5);}));});
+      return Promise.all(a);},400);
+    st(5,function(){lit('g1','lit-k',2200);lit('g2','lit-k',2200);
+      return Promise.all([travel(MN,toData(1),600,tk,5),travel(MN,toData(2),600,tk,5)]);});
+    st(6,function(){lit('m0','lit-m',1800);lit('m0','lit-o',1800);return travel(MT,toMeta(0),650,tk);},600);
+  } else if(k==='ls'){
+    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2400);lit('m1','lit-m',2400);return travel(MT,toMeta(0),650,tk);});
+    st(2,function(){return sleep(420);});
+    st(3,function(){return travel(OK,[M[0],[440,140],P.sf,P.app],900,tk);},600);
+  } else if(k==='read'){
+    st(0,function(){lit('m0','lit-m',2600);return travel(MT,[P.app,P.sf],420,tk).then(function(){
+      return travel(MT,toMeta(0),620,tk);});});
+    st(1,function(){lit('m1','lit-m',2200);return travel(MT,toMeta(1),560,tk);});
+    st(2,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3000);});return sleep(420);});
+    st(3,function(){return Promise.all([4,9,13].map(function(g,n){
+      return sleep(n*120).then(function(){return travel(D,fromData(g),650,tk,5.5);});}));});
+    st(4,function(){return travel(OK,[P.sf,P.app],520,tk);},600);
+  } else if(k==='partial'){
+    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toMeta(0),620,tk);});
+    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3000);});
+      return Promise.all([7,12].map(function(g,n){
+        return sleep(n*140).then(function(){return travel(D,toData(g),640,tk,6);});}));});
+    st(3,function(){lit('m0','lit-o',1600);return travel(OK,toMeta(0),600,tk);},700);
+  } else if(k==='rm'){
+    st(0,function(){lit('m0','lit-m',2000);return travel(MT,[P.app,P.sf],420,tk).then(function(){
+      return travel(MT,toMeta(0),620,tk);});});
+    st(1,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-k',2600);});return sleep(600);});
+    st(2,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',1800);});return sleep(700);});
+    st(3,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k','lit-d');e.classList.add('dead');}});return sleep(900);});
+    st(4,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1200);}});
+      return sleep(900);},700);
+  }
+  seq.then(function(){ if(tk===token){ return sleep(1100).then(function(){ if(tk===token) run(k,tk); }); } });
+}
+function select(k){ cur=k; token++; var tk=token;
+  document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
+  exp.innerHTML=EXP[k]; run(k,tk); }
+document.querySelectorAll('.sc').forEach(function(b){
+  b.addEventListener('click',function(){select(b.dataset.s);});});
+play.addEventListener('click',function(){ paused=!paused;
+  play.innerHTML=paused?'&#9654; play':'&#9208; pause';});
+var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduced){ play.style.display='none'; cap.textContent='Animation disabled (reduced motion). Sequence described below.';
+  exp.innerHTML=EXP['mkdir']; }
+else { select('mkdir'); }
+})();
+<\/script>
+</body></html>`;
+MODS[MODS.findIndex(function(m){return m.id==='25';})].iframeHtml=JOURNEY_HTML_SOFS;
+var JOURNEY_HTML_SOFS_FR=`<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anatomie d'une opération SOFS</title>
+<style>
+:root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
+h1{font-size:26px;font-weight:800;margin:6px 0 8px}
+h1 em{color:var(--acc);font-style:normal}
+.lede{color:var(--t2);font-size:14px;max-width:70ch}
+.ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;
+cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc:hover{color:var(--t1);border-color:var(--t3)}
+.sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+svg{width:100%;height:auto;display:block}
+.box{fill:none;stroke:var(--line);stroke-width:1.5;rx:9}
+.blabel{fill:var(--t2);font-size:12px;font-weight:700}
+.bsub{fill:var(--t3);font-size:10px}
+.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
+.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
+.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
+.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
+.node.dead{fill:#15181f;stroke:#22262f}
+.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
+.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
+.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
+.cap b{color:var(--acc)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:78ch}
+.seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
+.seen b{color:var(--t1)}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
+.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
+.fb li{margin:7px 0 7px 18px}
+@media (prefers-reduced-motion: reduce){.fb{display:block}}
+</style></head>
+<body>
+<div class="kicker">Onboarding · internals du stockage distribué</div>
+<h1>Anatomie d'une opération <em>SOFS</em></h1>
+<p class="lede">Six appels POSIX, une seule infrastructure. Choisissez un appel et regardez ce qui s'allume — et surtout ce qui reste éteint.</p>
+
+<div class="ctrl"><button class="sc on" data-s="mkdir">mkdir</button><button class="sc" data-s="write">écriture</button><button class="sc" data-s="ls">ls -l</button><button class="sc" data-s="read">lecture</button><button class="sc" data-s="partial">écriture partielle</button><button class="sc" data-s="rm">rm</button><button id="play">&#9208; pause</button></div>
+
+<div class="stage">
+<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomie d'une opération SOFS">
+  <path class="link" d="M150 200 H260"/>
+  <path class="link" d="M370 180 C440 120 470 90 545 82"/>
+  <path class="link" d="M370 220 C440 250 470 260 570 265"/>
+  <rect class="box" x="520" y="35" width="300" height="95" rx="9"/>
+  <text class="blabel" x="534" y="57">RING META — MESA</text>
+  <text class="bsub" x="534" y="73">répertoires + inodes · CoS 4+ · SSD</text>
+  <rect class="box" x="520" y="165" width="380" height="205" rx="9"/>
+  <text class="blabel" x="534" y="188">RING DATA</text>
+  <text class="bsub" x="534" y="204">main chunk · pages b-tree · stripes de 128 Ko</text>
+  <rect class="node" id="app" x="40" y="172" width="110" height="56" rx="8"/>
+  <text class="ntext" x="95" y="196" text-anchor="middle">Application</text>
+  <text class="nsub" x="95" y="212" text-anchor="middle">POSIX</text>
+  <rect class="node" id="sfused" x="260" y="172" width="110" height="56" rx="8"/>
+  <text class="ntext" x="315" y="196" text-anchor="middle">sfused</text>
+  <text class="nsub" x="315" y="212" text-anchor="middle">daemon SOFS</text>
+  <g id="grid"></g>
+</svg>
+</div>
+
+<p class="cap" id="cap"></p>
+<div class="legend">
+  <span><i style="background:var(--meta)"></i>métadonnées MESA</span>
+  <span><i style="background:var(--data)"></i>stripe de contenu</span>
+  <span><i style="background:var(--main)"></i>main chunk / page b-tree</span>
+  <span><i style="background:var(--ok)"></i>commit / acquittement</span>
+</div>
+
+<div class="seen"><h3>Ce que vous venez de voir</h3><div id="exp"></div></div>
+<ul class="fb"><li><i>Animation désactivée (mouvement réduit). Séquence décrite ci-dessous.</i></li><li><b>mkdir</b> — L'appel entre dans sfused · Transaction MESA : création de l'inode du répertoire · Ajout de l'entrée dans le répertoire parent · Commit — ou rollback intégral</li><li><b>écriture</b> — Le contenu arrive dans sfused · Choix du mode d'inode par motif sur le nom · Le main chunk part en CoS 4 · Le contenu est découpé en stripes de 128 Ko · Chaque stripe franchit le seuil de 60 000 octets et part en ARC · Les pages b-tree indexent les stripes · L'index est validé dans MESA</li><li><b>ls -l</b> — L'appel entre dans sfused · Lecture de l'inode et du répertoire dans MESA · Taille, droits, horodatages : tout est là · Réponse à l'application</li><li><b>lecture</b> — Lecture de l'inode dans MESA · Parcours des pages b-tree · Identification des seules stripes couvrant la plage · GET sur ces stripes uniquement · Assemblage et réponse</li><li><b>écriture partielle</b> — Écriture de 4 Ko au milieu d'un fichier de 10 Go · MESA localise les stripes concernées · Deux stripes sont réécrites · L'index est mis à jour</li><li><b>rm</b> — Transaction MESA : l'entrée et l'inode disparaissent · Les chunks sont marqués supprimés · GC — les listes de suppression partent en asynchrone · Purge — désallocation après 7 jours de rétention · Relocation — l'espace disque est enfin rendu</li></ul>
+
+<script>
+(function(){
+var NS='http://www.w3.org/2000/svg';
+var svg=document.getElementById('map'), grid=document.getElementById('grid');
+var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
+var paused=false, token=0, cur='mkdir';
+var M=[[560,82],[620,82],[680,82],[740,82]];
+var G=[];
+var cols=[570,640,710,780,850], rows=[240,290,340];
+for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+  var n=document.createElementNS(NS,'rect');
+  n.setAttribute('x',cols[c]-16); n.setAttribute('y',rows[r]-13);
+  n.setAttribute('width',32); n.setAttribute('height',26); n.setAttribute('rx',5);
+  n.setAttribute('class','node'); n.setAttribute('id','g'+G.length);
+  grid.appendChild(n); G.push([cols[c],rows[r]]);
+}}
+for(var i=0;i<M.length;i++){
+  var m=document.createElementNS(NS,'rect');
+  m.setAttribute('x',M[i][0]-16); m.setAttribute('y',M[i][1]-13);
+  m.setAttribute('width',32); m.setAttribute('height',26); m.setAttribute('rx',5);
+  m.setAttribute('class','node'); m.setAttribute('id','m'+i);
+  svg.insertBefore(m,grid); }
+var STEPS={'mkdir':["L'appel entre dans sfused","Transaction MESA : création de l'inode du répertoire","Ajout de l'entrée dans le répertoire parent","Commit — ou rollback intégral"],
+'write':["Le contenu arrive dans sfused","Choix du mode d'inode par motif sur le nom","Le main chunk part en CoS 4","Le contenu est découpé en stripes de 128 Ko","Chaque stripe franchit le seuil de 60 000 octets et part en ARC","Les pages b-tree indexent les stripes","L'index est validé dans MESA"],
+'ls':["L'appel entre dans sfused","Lecture de l'inode et du répertoire dans MESA","Taille, droits, horodatages : tout est là","Réponse à l'application"],
+'read':["Lecture de l'inode dans MESA","Parcours des pages b-tree","Identification des seules stripes couvrant la plage","GET sur ces stripes uniquement","Assemblage et réponse"],
+'partial':["Écriture de 4 Ko au milieu d'un fichier de 10 Go","MESA localise les stripes concernées","Deux stripes sont réécrites","L'index est mis à jour"],
+'rm':["Transaction MESA : l'entrée et l'inode disparaissent","Les chunks sont marqués supprimés","GC — les listes de suppression partent en asynchrone","Purge — désallocation après 7 jours de rétention","Relocation — l'espace disque est enfin rendu"]};
+var EXP={'mkdir':"<b>Le RING DATA est resté noir.</b> Créer un répertoire ne stocke aucun octet : c'est une transaction MESA, atomique de bout en bout. C'est cette atomicité qui garantit qu'un répertoire n'existe jamais à moitié, même quand plusieurs connectors écrivent dans la même arborescence.",
+'write':"Un fichier n'est pas un objet unique : <b>main chunk</b> (CoS 4), <b>pages b-tree</b> qui l'indexent (CoS 2) et <b>stripes</b> de 131 072 octets (CoS 2). Une stripe dépasse <code>replication_size_threshold</code>, donc elle part en erasure coding ; les pages, minuscules, restent répliquées. Les deux destinations travaillent en parallèle.",
+'ls':"<b>Zéro requête vers le RING DATA.</b> C'est la raison d'être des SSD dédiés aux métadonnées : un <code>ls -R</code> sur un gros volume est un déluge de petites lectures aléatoires, exactement ce qu'un disque mécanique fait mal.",
+'read':"Trois nœuds s'allument sur douze. Les pages b-tree servent à ne demander <b>que</b> les stripes utiles. Avec un cache de type <code>stripe</code>, on descend encore d'un cran : lire des portions de stripes plutôt que des stripes entières.",
+'partial':"<b>Le point qui sépare le fichier de l'objet.</b> Deux stripes bougent, le reste du fichier ne bouge pas. En S3, l'objet est immuable : le même geste réécrit les 10 Go. C'est aussi pourquoi NFS sur S3 ne supporte pas les mises à jour partielles.",
+'rm':"La réponse à l'application est immédiate, la libération ne l'est pas. Trois tâches distinctes s'enchaînent, et c'est la <b>Relocation</b> qui rend réellement l'espace en réécrivant les fichiers DAT — ni le GC, ni la Purge. Pendant la rétention, un Undelete reste possible."};
+function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
+  c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function sleep(ms){return new Promise(function(res){setTimeout(res,ms);});}
+function idle(){return new Promise(function(res){(function k(){if(!paused)return res();setTimeout(k,80);})();});}
+function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
+  function fr(ts){ if(tk!==token){try{el.remove();}catch(e){} return res();}
+    if(paused){requestAnimationFrame(fr);return;}
+    if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
+    el.setAttribute('cx',a[0]+(b[0]-a[0])*p); el.setAttribute('cy',a[1]+(b[1]-a[1])*p);
+    if(p<1)requestAnimationFrame(fr); else res(); }
+  requestAnimationFrame(fr);});}
+function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  return nxt();}
+function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
+  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.node').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
+function say(k,i){cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i];}
+var P={app:[95,200], sf:[315,200]};
+function toMeta(i){return [P.sf,[440,140],M[i]];}
+function toData(i){return [P.sf,[470,250],G[i]];}
+function fromData(i){return [G[i],[470,250],P.sf];}
+function run(k,tk){
+  clear();
+  var seq=Promise.resolve();
+  function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
+    say(k,i); return f().then(function(){ return sleep(hold||260); }); }); }
+  var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
+  if(k==='mkdir'){
+    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toMeta(0),700,tk);});
+    st(2,function(){lit('m1','lit-m',2000);return travel(MT,toMeta(1),700,tk);});
+    st(3,function(){lit('m0','lit-o',1400);lit('m1','lit-o',1400);return sleep(700);},600);
+  } else if(k==='write'){
+    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('sfused','lit-k',900);return sleep(500);});
+    st(2,function(){lit('g0','lit-k',3600);return travel(MN,toData(0),650,tk,7.5);});
+    st(3,function(){return sleep(300);});
+    st(4,function(){var a=[];[3,4,6,8,9,11,12,14].forEach(function(g,n){
+        lit('g'+g,'lit-d',3200); a.push(sleep(n*90).then(function(){return travel(D,toData(g),620,tk,5.5);}));});
+      return Promise.all(a);},400);
+    st(5,function(){lit('g1','lit-k',2200);lit('g2','lit-k',2200);
+      return Promise.all([travel(MN,toData(1),600,tk,5),travel(MN,toData(2),600,tk,5)]);});
+    st(6,function(){lit('m0','lit-m',1800);lit('m0','lit-o',1800);return travel(MT,toMeta(0),650,tk);},600);
+  } else if(k==='ls'){
+    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2400);lit('m1','lit-m',2400);return travel(MT,toMeta(0),650,tk);});
+    st(2,function(){return sleep(420);});
+    st(3,function(){return travel(OK,[M[0],[440,140],P.sf,P.app],900,tk);},600);
+  } else if(k==='read'){
+    st(0,function(){lit('m0','lit-m',2600);return travel(MT,[P.app,P.sf],420,tk).then(function(){
+      return travel(MT,toMeta(0),620,tk);});});
+    st(1,function(){lit('m1','lit-m',2200);return travel(MT,toMeta(1),560,tk);});
+    st(2,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3000);});return sleep(420);});
+    st(3,function(){return Promise.all([4,9,13].map(function(g,n){
+      return sleep(n*120).then(function(){return travel(D,fromData(g),650,tk,5.5);});}));});
+    st(4,function(){return travel(OK,[P.sf,P.app],520,tk);},600);
+  } else if(k==='partial'){
+    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toMeta(0),620,tk);});
+    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3000);});
+      return Promise.all([7,12].map(function(g,n){
+        return sleep(n*140).then(function(){return travel(D,toData(g),640,tk,6);});}));});
+    st(3,function(){lit('m0','lit-o',1600);return travel(OK,toMeta(0),600,tk);},700);
+  } else if(k==='rm'){
+    st(0,function(){lit('m0','lit-m',2000);return travel(MT,[P.app,P.sf],420,tk).then(function(){
+      return travel(MT,toMeta(0),620,tk);});});
+    st(1,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-k',2600);});return sleep(600);});
+    st(2,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',1800);});return sleep(700);});
+    st(3,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k','lit-d');e.classList.add('dead');}});return sleep(900);});
+    st(4,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1200);}});
+      return sleep(900);},700);
+  }
+  seq.then(function(){ if(tk===token){ return sleep(1100).then(function(){ if(tk===token) run(k,tk); }); } });
+}
+function select(k){ cur=k; token++; var tk=token;
+  document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
+  exp.innerHTML=EXP[k]; run(k,tk); }
+document.querySelectorAll('.sc').forEach(function(b){
+  b.addEventListener('click',function(){select(b.dataset.s);});});
+play.addEventListener('click',function(){ paused=!paused;
+  play.innerHTML=paused?'&#9654; lecture':'&#9208; pause';});
+var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduced){ play.style.display='none'; cap.textContent='Animation désactivée (mouvement réduit). Séquence décrite ci-dessous.';
+  exp.innerHTML=EXP['mkdir']; }
+else { select('mkdir'); }
+})();
+<\/script>
+</body></html>`;
+MODS[MODS.findIndex(function(m){return m.id==='25';})].iframeHtmlFr=JOURNEY_HTML_SOFS_FR;
+
 
 var state={view:'home',tab:'theory',modIdx:0,scores:{},answers:{},lang:localStorage.getItem('ringLang')||'fr',fileHandle:null};
 (function(){
@@ -8039,8 +8489,8 @@ function showTab(tab){
   document.querySelector('#modulePage .mpbody').scrollTop=0;
 }
 
-var SIDEBAR_ORDER=['01','02','03','07','04','10','24','12','15','17','20','21','22','23','14','16','05','06','08','13','09','11','18','19'];
-var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','24':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers','20':'Anatomie des opérations S3','21':'Anatomie des opérations S3','22':'Anatomie des opérations S3','23':'Anatomie des opérations S3'};
+var SIDEBAR_ORDER=['01','02','03','07','04','10','24','25','12','15','17','20','21','22','23','14','16','05','06','08','13','09','11','18','19'];
+var SIDEBAR_GROUPS={'01':'Architecture RING','02':'Architecture RING','03':'Architecture RING','04':'Architecture RING','07':'Architecture RING','10':'SOFS','24':'SOFS','25':'SOFS','12':'S3 Connector','15':'S3 Connector','17':'S3 Connector','14':'CRR & Multi-site DR','16':'CRR & Multi-site DR','05':'Exploitation du RING','06':'Exploitation du RING','08':'Exploitation du RING','13':'Exploitation du RING','09':'Administration','11':'Administration','18':'Administration','19':'Composants Tiers','20':'Anatomie des opérations S3','21':'Anatomie des opérations S3','22':'Anatomie des opérations S3','23':'Anatomie des opérations S3'};
 
 
 var SIDEBAR_GROUPS_EN={"Architecture RING": "RING Architecture", "SOFS": "SOFS", "S3 Connector": "S3 Connector", "CRR & Multi-site DR": "CRR & Multi-site DR", "Exploitation du RING": "RING Operations", "Administration": "Administration", "Composants Tiers": "Third-party Components", "Anatomie des opérations S3": "S3 Operations Anatomy"};
