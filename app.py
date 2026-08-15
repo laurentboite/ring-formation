@@ -15,7 +15,33 @@ CLIENT_SECRET  = os.environ['GOOGLE_CLIENT_SECRET']
 ALLOWED_DOMAIN = 'scality.com'
 BASE_URL = os.environ.get('BASE_URL', 'https://ring-formation-1098349828563.europe-west1.run.app')
 
+# Portail CS Tools qui héberge le widget Review (bouton feedback commun).
+CS_PORTAL_URL = os.environ.get('CS_PORTAL_URL',
+                               'https://scality-cs-tools-tpihmntjla-ew.a.run.app')
+
+def _serve_with_review(fname, app_name):
+    """Sert un fichier HTML en ajoutant le widget Review tout à la fin.
+
+    On l'ajoute APRÈS </html> (hors de tout bloc <script>) : ce fichier contient
+    des documents HTML dans des template-literals JS, donc injecter au milieu
+    casserait le script principal. Un <script> en fin de flux s'exécute quand même.
+    """
+    with open(fname, encoding='utf-8') as f:
+        html = f.read()
+    tag = (f'\n<script src="{CS_PORTAL_URL}/review/widget.js" '
+           f'data-app="{app_name}"></script>\n')
+    return Response(html + tag, mimetype='text/html')
+
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '0'
+
+@app.before_request
+def _cs_proxy_trust():
+    """Confiance au portail CS Tools : si le proxy présente le secret partagé,
+    on considère l'utilisateur authentifié (bypass de l'OAuth propre)."""
+    sec = os.environ.get('CS_PROXY_SECRET')
+    if sec and request.headers.get('X-CS-Proxy-Secret') == sec:
+        session['email'] = request.headers.get('X-CS-User') or 'proxy@scality.com'
+        session['name'] = session['email'].split('@')[0]
 
 db = firestore.Client()
 
@@ -69,13 +95,13 @@ def logout():
 def index():
     if 'email' not in session:
         return redirect(url_for('login'))
-    return send_file('ring-formation.html')
+    return _serve_with_review('ring-formation.html', 'ring-formation')
 
 @app.route('/ring-release-notes.html')
 def release_notes():
     if 'email' not in session:
         return redirect(url_for('login'))
-    return send_file('ring-release-notes.html')
+    return _serve_with_review('ring-release-notes.html', 'ring-formation')
 
 # ── comments API ──────────────────────────────────────────────────────────────
 

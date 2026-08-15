@@ -11,6 +11,8 @@
 ring_install_base_*.csv
 # fichiers temporaires
 .~lock.*
+__pycache__/
+*.pyc
 # docs personnels
 *.docx
 *.pptx
