@@ -7951,119 +7951,124 @@ var JOURNEY_HTML_SOFS=`<!DOCTYPE html>
 <title>Anatomy of a SOFS operation</title>
 <style>
 :root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
---acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e;
+--mono:ui-monospace,Menlo,Consolas,monospace}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
 .kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
 h1{font-size:26px;font-weight:800;margin:6px 0 8px}
 h1 em{color:var(--acc);font-style:normal}
-.lede{color:var(--t2);font-size:14px;max-width:70ch}
+.lede{color:var(--t2);font-size:14px;max-width:74ch}
 .ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
-.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;
-cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 14px;border-radius:7px;
+cursor:pointer;font-size:12.5px;font-family:var(--mono);transition:all .15s}
 .sc:hover{color:var(--t1);border-color:var(--t3)}
 .sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
-#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
-.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:6px 14px;border-radius:99px;cursor:pointer;font-size:11px;font-family:var(--mono)}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 0}
 svg{width:100%;height:auto;display:block}
-.box{fill:none;stroke:var(--line);stroke-width:1.5;rx:9}
-.blabel{fill:var(--t2);font-size:12px;font-weight:700}
-.bsub{fill:var(--t3);font-size:10px}
-.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
-.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
-.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
-.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
-.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
-.node.dead{fill:#15181f;stroke:#22262f}
-.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
-.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
-.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
-.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
-.cap b{color:var(--acc)}
+.fedge{stroke:var(--line);stroke-width:1.4;stroke-dasharray:4 5}
+.fnode{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.fnode.lit-m{fill:rgba(167,139,250,.32);stroke:var(--meta)}
+.fnode.lit-d{fill:rgba(56,189,248,.32);stroke:var(--data)}
+.fnode.lit-k{fill:rgba(245,158,11,.32);stroke:var(--main)}
+.fnode.lit-o{fill:rgba(34,197,94,.32);stroke:var(--ok)}
+.fnode.dead{fill:#15181f;stroke:#22262f}
+.flabel{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.flabel.s{fill:var(--t3);font-size:9.5px;font-weight:500;font-family:var(--mono)}
+.lane{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.22em}
+#okbadge{font-family:var(--mono);font-size:11.5px;font-weight:600;fill:var(--ok);opacity:0;transition:opacity .3s}
+.fcap{display:flex;align-items:center;gap:14px;padding:12px 2px;border-top:1px dashed var(--line);margin-top:10px}
+.fcap .txt{font-size:13.5px;color:var(--t2);min-height:24px;flex:1}
+.fcap .txt b{color:var(--t1)}
 .legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
-border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:78ch}
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:80ch}
 .seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
 .seen b{color:var(--t1)}
-code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
-.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
-.fb li{margin:7px 0 7px 18px}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data);font-family:var(--mono)}
+.fb{display:none;margin-top:16px;font-size:12.5px;color:var(--t2)}
+.fb li{margin:8px 0 8px 18px}
 @media (prefers-reduced-motion: reduce){.fb{display:block}}
 </style></head>
 <body>
 <div class="kicker">Onboarding · distributed storage internals</div>
 <h1>Anatomy of a <em>SOFS operation</em></h1>
-<p class="lede">Six POSIX calls, one infrastructure. Pick a call and watch what lights up — and above all what stays dark.</p>
+<p class="lede">Six POSIX calls, one infrastructure. Pick a call and follow what lights up — and above all what stays dark.</p>
 
 <div class="ctrl"><button class="sc on" data-s="mkdir">mkdir</button><button class="sc" data-s="write">write</button><button class="sc" data-s="ls">ls -l</button><button class="sc" data-s="read">read</button><button class="sc" data-s="partial">partial write</button><button class="sc" data-s="rm">rm</button><button id="play">&#9208; pause</button></div>
 
 <div class="stage">
-<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomy of a SOFS operation">
-  <path class="link" d="M150 200 H260"/>
-  <path class="link" d="M370 180 C440 120 470 90 545 82"/>
-  <path class="link" d="M370 220 C440 250 470 260 570 265"/>
-  <rect class="box" x="520" y="35" width="300" height="95" rx="9"/>
-  <text class="blabel" x="534" y="57">RING META — MESA</text>
-  <text class="bsub" x="534" y="73">directories + inodes · CoS 4+ · SSD</text>
-  <rect class="box" x="520" y="165" width="380" height="205" rx="9"/>
-  <text class="blabel" x="534" y="188">RING DATA</text>
-  <text class="bsub" x="534" y="204">main chunk · b-tree pages · 128 KB stripes</text>
-  <rect class="node" id="app" x="40" y="172" width="110" height="56" rx="8"/>
-  <text class="ntext" x="95" y="196" text-anchor="middle">Application</text>
-  <text class="nsub" x="95" y="212" text-anchor="middle">POSIX</text>
-  <rect class="node" id="sfused" x="260" y="172" width="110" height="56" rx="8"/>
-  <text class="ntext" x="315" y="196" text-anchor="middle">sfused</text>
-  <text class="nsub" x="315" y="212" text-anchor="middle">SOFS daemon</text>
+<svg id="map" viewBox="0 0 1000 386" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomy of a SOFS operation">
+  <line class="fedge" x1="150" y1="196" x2="228" y2="196"/>
+  <line class="fedge" x1="352" y1="176" x2="470" y2="104"/>
+  <line class="fedge" x1="352" y1="216" x2="470" y2="268"/>
+  <line class="fedge" x1="290" y1="228" x2="290" y2="286"/>
+  <text class="lane" x="712" y="40" text-anchor="middle" fill="#a78bfa">METADATA</text>
+  <g id="mesa"></g>
+  <text class="flabel s" x="712" y="140" text-anchor="middle">MESA — directories + inodes · META RING · CoS 4+ · SSD</text>
+  <text class="lane" x="712" y="186" text-anchor="middle" fill="#38bdf8">DATA</text>
   <g id="grid"></g>
+  <text class="flabel s" x="712" y="368" text-anchor="middle">bizstorenode ×15 — main_cos 4 · page_cos 2 · stripe_cos 2</text>
+  <rect class="fnode" id="app" x="40" y="168" width="110" height="56" rx="9"/>
+  <text class="flabel" x="95" y="192" text-anchor="middle">application</text>
+  <text class="flabel s" id="calltxt" x="95" y="208" text-anchor="middle">mkdir()</text>
+  <text id="okbadge" x="95" y="156" text-anchor="middle">0</text>
+  <rect class="fnode" id="sfused" x="228" y="168" width="124" height="56" rx="9"/>
+  <text class="flabel" x="290" y="192" text-anchor="middle">sfused</text>
+  <text class="flabel s" x="290" y="208" text-anchor="middle">sfused.conf · ino_mode</text>
+  <rect class="fnode" id="mship" x="232" y="286" width="116" height="46" rx="9"/>
+  <text class="flabel" x="290" y="305" text-anchor="middle">membershipd</text>
+  <text class="flabel s" x="290" y="320" text-anchor="middle">ZooKeeper · DLM</text>
 </svg>
+<div class="fcap"><div class="txt" id="cap"></div></div>
 </div>
 
-<p class="cap" id="cap"></p>
 <div class="legend">
   <span><i style="background:var(--meta)"></i>MESA metadata</span>
   <span><i style="background:var(--data)"></i>content stripe</span>
   <span><i style="background:var(--main)"></i>main chunk / b-tree page</span>
-  <span><i style="background:var(--ok)"></i>commit / ack</span>
+  <span><i style="background:var(--ok)"></i>commit / return</span>
 </div>
 
 <div class="seen"><h3>What you just saw</h3><div id="exp"></div></div>
-<ul class="fb"><li><i>Animation disabled (reduced motion). Sequence described below.</i></li><li><b>mkdir</b> — The call enters sfused · MESA transaction: the directory inode is created · The entry is added to the parent directory · Commit — or full rollback</li><li><b>write</b> — Content enters sfused · Inode mode chosen by name pattern · The main chunk goes out at CoS 4 · Content is cut into 128 KB stripes · Each stripe is above the 60,000-byte threshold, so it goes to ARC · B-tree pages index the stripes · The index is committed in MESA</li><li><b>ls -l</b> — The call enters sfused · Inode and directory read from MESA · Size, permissions, timestamps: all there · Answer returned to the application</li><li><b>read</b> — Inode read from MESA · B-tree pages walked · Only the stripes covering the range are identified · GET on those stripes only · Assembly and response</li><li><b>partial write</b> — 4 KB written in the middle of a 10 GB file · MESA locates the affected stripes · Two stripes are rewritten · The index is updated</li><li><b>rm</b> — MESA transaction: entry and inode are gone · Chunks are flagged as deleted · GC — deletion lists go out asynchronously · Purge — unallocation after a seven-day retention · Relocation — disk space is finally returned</li></ul>
+<ul class="fb"><li><i>Animation disabled (reduced motion). Detailed sequences below.</i></li><li><b>mkdir</b> — ① the call enters sfused, the parent is resolved from <b>cache_md</b> ② a <b>MESA transaction</b> is opened ③ the directory inode is allocated — mode set by <b>directory_ino_mode</b> ④ the entry is inserted into the parent directory inode ⑤ <b>commit</b> — or full rollback, never an in-between state ⑥ returns <b>0</b> — not one byte written to the DATA RING</li><li><b>write</b> — ① <b>open()</b>: the name is matched against the ino_mode patterns, mode 1 through 7 ② first pattern that matches: the inode is allocated, its mode <b>burned into its number</b> ③ the <b>main chunk</b> goes out at main_cos 4, i.e. 5 copies ④ content is cut into stripes of <b>131,072 bytes</b> (stripe_size) ⑤ each stripe is above <b>replication_size_threshold</b> (60,000 B): it goes to ARC ⑥ stripes spread across the bizstorenodes of the DATA RING ⑦ <b>b-tree pages</b> (page_cos 2) index the stripes ⑧ the index is <b>committed in MESA</b> ⑨ <b>close()</b>: fsync_on_close is 1, a sync is forced</li><li><b>ls -l</b> — ① <b>readdir()</b> on the directory ② entries read from <b>MESA</b>, served by cache_md ③ one <b>stat</b> per entry: size, permissions, timestamps ④ <b>no request</b> to the DATA RING — the grid stays dark ⑤ the listing goes back to the application</li><li><b>read</b> — ① <b>open()</b> then lseek: nothing read yet ② the <b>inode</b> is read from MESA ③ the <b>b-tree pages</b> are walked for the requested range ④ only the stripes <b>covering the range</b> are identified ⑤ GET on those stripes only — 3 nodes out of 15 ⑥ with a <b>stripe</b> cache, even parts of stripes can be read ⑦ assembly, then the requested bytes are returned</li><li><b>partial write</b> — ① <b>lseek()</b> into the middle of a 10 GiB file ② MESA locates the <b>affected stripes</b> through the b-tree pages ③ read-modify-write on those stripes only ④ <b>2 stripes</b> rewritten — the rest of the file does not move ⑤ index updated if the boundaries changed ⑥ <b>MESA commit</b>, returns 0 ⑦ on S3 the same gesture would rewrite <b>the whole object</b>: it is immutable</li><li><b>rm</b> — ① <b>unlink()</b>: permission check on the parent ② if <b>Recycle</b> is enabled the file moves to .recycle and stops there ③ otherwise a MESA transaction: entry and inode are gone ④ <b>fast_delete</b>: a file with no stripe comes down to its main chunk ⑤ chunks are <b>flagged deleted</b> — the bytes are still there ⑥ <b>GC</b>: deletion lists go out asynchronously ⑦ <b>Purge</b>: unallocation after a seven-day retention ⑧ <b>Relocation</b>: DAT files are rewritten, space is returned</li></ul>
 
 <script>
 (function(){
 var NS='http://www.w3.org/2000/svg';
-var svg=document.getElementById('map'), grid=document.getElementById('grid');
+var svg=document.getElementById('map'), grid=document.getElementById('grid'), mesa=document.getElementById('mesa');
 var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
-var paused=false, token=0, cur='mkdir';
-var M=[[560,82],[620,82],[680,82],[740,82]];
-var G=[];
-var cols=[570,640,710,780,850], rows=[240,290,340];
-for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+var badge=document.getElementById('okbadge'), calltxt=document.getElementById('calltxt');
+var paused=false, token=0;
+var M=[], G=[];
+var mx=[600,660,720,780,840];
+for(var i=0;i<mx.length;i++){
   var n=document.createElementNS(NS,'rect');
-  n.setAttribute('x',cols[c]-16); n.setAttribute('y',rows[r]-13);
-  n.setAttribute('width',32); n.setAttribute('height',26); n.setAttribute('rx',5);
-  n.setAttribute('class','node'); n.setAttribute('id','g'+G.length);
-  grid.appendChild(n); G.push([cols[c],rows[r]]);
-}}
-for(var i=0;i<M.length;i++){
-  var m=document.createElementNS(NS,'rect');
-  m.setAttribute('x',M[i][0]-16); m.setAttribute('y',M[i][1]-13);
-  m.setAttribute('width',32); m.setAttribute('height',26); m.setAttribute('rx',5);
-  m.setAttribute('class','node'); m.setAttribute('id','m'+i);
-  svg.insertBefore(m,grid); }
-var STEPS={'mkdir':["The call enters sfused","MESA transaction: the directory inode is created","The entry is added to the parent directory","Commit — or full rollback"],
-'write':["Content enters sfused","Inode mode chosen by name pattern","The main chunk goes out at CoS 4","Content is cut into 128 KB stripes","Each stripe is above the 60,000-byte threshold, so it goes to ARC","B-tree pages index the stripes","The index is committed in MESA"],
-'ls':["The call enters sfused","Inode and directory read from MESA","Size, permissions, timestamps: all there","Answer returned to the application"],
-'read':["Inode read from MESA","B-tree pages walked","Only the stripes covering the range are identified","GET on those stripes only","Assembly and response"],
-'partial':["4 KB written in the middle of a 10 GB file","MESA locates the affected stripes","Two stripes are rewritten","The index is updated"],
-'rm':["MESA transaction: entry and inode are gone","Chunks are flagged as deleted","GC — deletion lists go out asynchronously","Purge — unallocation after a seven-day retention","Relocation — disk space is finally returned"]};
-var EXP={'mkdir':"<b>The DATA RING stayed dark.</b> Creating a directory stores no bytes: it is a MESA transaction, atomic end to end. That atomicity is what guarantees a directory never exists half-created, even when several connectors write into the same tree.",
-'write':"A file is not a single object: a <b>main chunk</b> (CoS 4), <b>b-tree pages</b> indexing it (CoS 2) and <b>stripes</b> of 131,072 bytes (CoS 2). A stripe is above <code>replication_size_threshold</code>, so it goes to erasure coding; the tiny pages stay replicated. Both destinations work in parallel.",
+  n.setAttribute('x',mx[i]-22);n.setAttribute('y',88);n.setAttribute('width',44);n.setAttribute('height',30);
+  n.setAttribute('rx',6);n.setAttribute('class','fnode');n.setAttribute('id','m'+i);
+  mesa.appendChild(n);M.push([mx[i],103]);}
+var cols=[560,626,692,758,824], rows=[218,268,318];
+for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+  var g=document.createElementNS(NS,'rect');
+  g.setAttribute('x',cols[c]-21);g.setAttribute('y',rows[r]-14);g.setAttribute('width',42);g.setAttribute('height',28);
+  g.setAttribute('rx',6);g.setAttribute('class','fnode');g.setAttribute('id','g'+G.length);
+  grid.appendChild(g);G.push([cols[c],rows[r]]);}}
+var STEPS={'mkdir':["① the call enters sfused, the parent is resolved from <b>cache_md</b>","② a <b>MESA transaction</b> is opened","③ the directory inode is allocated — mode set by <b>directory_ino_mode</b>","④ the entry is inserted into the parent directory inode","⑤ <b>commit</b> — or full rollback, never an in-between state","⑥ returns <b>0</b> — not one byte written to the DATA RING"],
+'write':["① <b>open()</b>: the name is matched against the ino_mode patterns, mode 1 through 7","② first pattern that matches: the inode is allocated, its mode <b>burned into its number</b>","③ the <b>main chunk</b> goes out at main_cos 4, i.e. 5 copies","④ content is cut into stripes of <b>131,072 bytes</b> (stripe_size)","⑤ each stripe is above <b>replication_size_threshold</b> (60,000 B): it goes to ARC","⑥ stripes spread across the bizstorenodes of the DATA RING","⑦ <b>b-tree pages</b> (page_cos 2) index the stripes","⑧ the index is <b>committed in MESA</b>","⑨ <b>close()</b>: fsync_on_close is 1, a sync is forced"],
+'ls':["① <b>readdir()</b> on the directory","② entries read from <b>MESA</b>, served by cache_md","③ one <b>stat</b> per entry: size, permissions, timestamps","④ <b>no request</b> to the DATA RING — the grid stays dark","⑤ the listing goes back to the application"],
+'read':["① <b>open()</b> then lseek: nothing read yet","② the <b>inode</b> is read from MESA","③ the <b>b-tree pages</b> are walked for the requested range","④ only the stripes <b>covering the range</b> are identified","⑤ GET on those stripes only — 3 nodes out of 15","⑥ with a <b>stripe</b> cache, even parts of stripes can be read","⑦ assembly, then the requested bytes are returned"],
+'partial':["① <b>lseek()</b> into the middle of a 10 GiB file","② MESA locates the <b>affected stripes</b> through the b-tree pages","③ read-modify-write on those stripes only","④ <b>2 stripes</b> rewritten — the rest of the file does not move","⑤ index updated if the boundaries changed","⑥ <b>MESA commit</b>, returns 0","⑦ on S3 the same gesture would rewrite <b>the whole object</b>: it is immutable"],
+'rm':["① <b>unlink()</b>: permission check on the parent","② if <b>Recycle</b> is enabled the file moves to .recycle and stops there","③ otherwise a MESA transaction: entry and inode are gone","④ <b>fast_delete</b>: a file with no stripe comes down to its main chunk","⑤ chunks are <b>flagged deleted</b> — the bytes are still there","⑥ <b>GC</b>: deletion lists go out asynchronously","⑦ <b>Purge</b>: unallocation after a seven-day retention","⑧ <b>Relocation</b>: DAT files are rewritten, space is returned"]};
+var EXP={'mkdir':"<b>The DATA RING stayed dark.</b> Creating a directory stores no bytes: it is a MESA transaction, atomic end to end. That atomicity is what lets several connectors write into the same tree without stepping on each other.",
+'write':"A file is not a single object: a <b>main chunk</b> (CoS 4), <b>b-tree pages</b> indexing it (CoS 2) and <b>stripes</b> of 128 KiB (CoS 2). Three kinds of objects, three Classes of Service, and two destinations working in parallel — MESA for the index, the DATA RING for the content.",
 'ls':"<b>Not one request to the DATA RING.</b> That is the whole point of dedicated metadata SSDs: an <code>ls -R</code> over a large volume is a flood of small random reads, exactly what a spinning disk handles badly.",
-'read':"Three nodes out of twelve light up. The b-tree pages exist so that <b>only</b> the useful stripes are requested. With a <code>stripe</code> cache you go one step further: reading parts of stripes rather than whole stripes.",
-'partial':"<b>The point that separates a file from an object.</b> Two stripes move, the rest of the file does not. On S3 the object is immutable: the same gesture rewrites all 10 GB. It is also why NFS on S3 does not support partial updates.",
-'rm':"The answer to the application is immediate, the reclaim is not. Three distinct tasks follow one another, and it is <b>Relocation</b> that actually returns space by rewriting the DAT files — neither the GC nor the Purge. During the retention window an Undelete remains possible."};
+'read':"Three nodes light up out of fifteen. The b-tree pages exist so that <b>only</b> the useful stripes are requested; a <code>stripe</code> cache goes one step further by reading parts of stripes.",
+'partial':"<b>The point that separates a file from an object.</b> Two stripes move, the rest of the file is untouched. On S3 the object is immutable: the same gesture rewrites all 10 GiB. It is also why NFS on S3 rejects partial updates.",
+'rm':"The answer to the application is immediate, the reclaim is not. Three tasks follow one another, and it is <b>Relocation</b> that actually returns space by rewriting the DAT files — neither the GC nor the Purge. During the retention window an Undelete remains possible."};
+var CALL={'mkdir':'mkdir()','write':'write() 1 GiB','ls':'readdir()','read':'pread() 40 KiB','partial':'pwrite() 4 KiB','rm':'unlink()'};
+var RET={'mkdir':'0','write':'0 · fsync','ls':'listing','read':'40 KiB','partial':'0','rm':'0'};
 function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
   c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
@@ -8077,84 +8082,98 @@ function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
     if(p<1)requestAnimationFrame(fr); else res(); }
   requestAnimationFrame(fr);});}
 function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
-  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
-    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve();}
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();});}
   return nxt();}
-function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
-  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
-function clear(){svg.querySelectorAll('.node').forEach(function(n){
-  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
-function say(k,i){cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i];}
-var P={app:[95,200], sf:[315,200]};
-function toMeta(i){return [P.sf,[440,140],M[i]];}
-function toData(i){return [P.sf,[470,250],G[i]];}
-function fromData(i){return [G[i],[470,250],P.sf];}
+function lit(id,cls,ms){var el=document.getElementById(id);if(!el)return;
+  el.classList.add(cls);if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.fnode').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});badge.style.opacity=0;}
+var P={app:[95,196], sf:[290,196], ms:[290,309]};
+function toM(i){return [P.sf,[460,140],M[i]];}
+function toG(i){return [P.sf,[470,250],G[i]];}
+function fromG(i){return [G[i],[470,250],P.sf];}
 function run(k,tk){
-  clear();
+  clear(); calltxt.textContent=CALL[k]; badge.textContent=RET[k];
   var seq=Promise.resolve();
   function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
-    say(k,i); return f().then(function(){ return sleep(hold||260); }); }); }
+    cap.innerHTML=STEPS[k][i]; return f().then(function(){return sleep(hold||240);});});}
   var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
   if(k==='mkdir'){
-    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toMeta(0),700,tk);});
-    st(2,function(){lit('m1','lit-m',2000);return travel(MT,toMeta(1),700,tk);});
-    st(3,function(){lit('m0','lit-o',1400);lit('m1','lit-o',1400);return sleep(700);},600);
+    st(0,function(){lit('sfused','lit-m',1600);return travel(MT,[P.app,P.sf],480,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toM(0),620,tk);});
+    st(2,function(){lit('m1','lit-m',2400);return travel(MT,toM(1),580,tk);});
+    st(3,function(){lit('m2','lit-m',2200);return travel(MT,toM(2),560,tk);});
+    st(4,function(){[0,1,2].forEach(function(i){lit('m'+i,'lit-o',1400);});return sleep(650);});
+    st(5,function(){badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);},800);
   } else if(k==='write'){
-    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('sfused','lit-k',900);return sleep(500);});
-    st(2,function(){lit('g0','lit-k',3600);return travel(MN,toData(0),650,tk,7.5);});
+    st(0,function(){lit('sfused','lit-k',1800);return travel(D,[P.app,P.sf],480,tk);});
+    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toM(0),560,tk);});
+    st(2,function(){lit('g0','lit-k',4200);return travel(MN,toG(0),620,tk,7.5);});
     st(3,function(){return sleep(300);});
-    st(4,function(){var a=[];[3,4,6,8,9,11,12,14].forEach(function(g,n){
-        lit('g'+g,'lit-d',3200); a.push(sleep(n*90).then(function(){return travel(D,toData(g),620,tk,5.5);}));});
-      return Promise.all(a);},400);
-    st(5,function(){lit('g1','lit-k',2200);lit('g2','lit-k',2200);
-      return Promise.all([travel(MN,toData(1),600,tk,5),travel(MN,toData(2),600,tk,5)]);});
-    st(6,function(){lit('m0','lit-m',1800);lit('m0','lit-o',1800);return travel(MT,toMeta(0),650,tk);},600);
+    st(4,function(){return sleep(300);});
+    st(5,function(){return Promise.all([3,4,6,7,9,11,12,14].map(function(g,n){lit('g'+g,'lit-d',3600);
+      return sleep(n*80).then(function(){return travel(D,toG(g),600,tk,5.5);});}));},350);
+    st(6,function(){[1,2].forEach(function(g){lit('g'+g,'lit-k',2400);});
+      return Promise.all([1,2].map(function(g){return travel(MN,toG(g),580,tk,5);}));});
+    st(7,function(){lit('m1','lit-m',2000);lit('m1','lit-o',2000);return travel(MT,toM(1),580,tk);});
+    st(8,function(){badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);},800);
   } else if(k==='ls'){
-    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2400);lit('m1','lit-m',2400);return travel(MT,toMeta(0),650,tk);});
-    st(2,function(){return sleep(420);});
-    st(3,function(){return travel(OK,[M[0],[440,140],P.sf,P.app],900,tk);},600);
+    st(0,function(){lit('sfused','lit-m',1500);return travel(MT,[P.app,P.sf],460,tk);});
+    st(1,function(){lit('m0','lit-m',2600);lit('m1','lit-m',2600);
+      return Promise.all([0,1].map(function(i){return travel(MT,toM(i),580,tk);}));});
+    st(2,function(){lit('m2','lit-m',2000);return travel(MT,toM(2),540,tk);});
+    st(3,function(){return sleep(500);});
+    st(4,function(){badge.style.opacity=1;return travel(OK,[M[0],[460,140],P.sf,P.app],820,tk);},800);
   } else if(k==='read'){
-    st(0,function(){lit('m0','lit-m',2600);return travel(MT,[P.app,P.sf],420,tk).then(function(){
-      return travel(MT,toMeta(0),620,tk);});});
-    st(1,function(){lit('m1','lit-m',2200);return travel(MT,toMeta(1),560,tk);});
-    st(2,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3000);});return sleep(420);});
-    st(3,function(){return Promise.all([4,9,13].map(function(g,n){
-      return sleep(n*120).then(function(){return travel(D,fromData(g),650,tk,5.5);});}));});
-    st(4,function(){return travel(OK,[P.sf,P.app],520,tk);},600);
+    st(0,function(){lit('sfused','lit-d',1400);return travel(MT,[P.app,P.sf],440,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toM(0),580,tk);});
+    st(2,function(){lit('m1','lit-m',2400);return travel(MT,toM(1),540,tk);});
+    st(3,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3400);});return sleep(420);});
+    st(4,function(){return Promise.all([4,9,13].map(function(g,n){
+      return sleep(n*110).then(function(){return travel(D,fromG(g),600,tk,5.5);});}));});
+    st(5,function(){return sleep(360);});
+    st(6,function(){badge.style.opacity=1;return travel(D,[P.sf,P.app],480,tk);},800);
   } else if(k==='partial'){
-    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toMeta(0),620,tk);});
-    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3000);});
-      return Promise.all([7,12].map(function(g,n){
-        return sleep(n*140).then(function(){return travel(D,toData(g),640,tk,6);});}));});
-    st(3,function(){lit('m0','lit-o',1600);return travel(OK,toMeta(0),600,tk);},700);
+    st(0,function(){lit('sfused','lit-d',1500);return travel(D,[P.app,P.sf],460,tk);});
+    st(1,function(){lit('m0','lit-m',2600);lit('m1','lit-m',2600);return travel(MT,toM(0),580,tk);});
+    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3200);});
+      return Promise.all([7,12].map(function(g,n){return sleep(n*120).then(function(){
+        return travel(D,fromG(g),560,tk,5.5);});}));});
+    st(3,function(){return Promise.all([7,12].map(function(g,n){return sleep(n*120).then(function(){
+      return travel(D,toG(g),560,tk,6);});}));},300);
+    st(4,function(){lit('m1','lit-k',1800);return travel(MN,toM(1),540,tk,5);});
+    st(5,function(){lit('m0','lit-o',1500);badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);});
+    st(6,function(){return sleep(900);},700);
   } else if(k==='rm'){
-    st(0,function(){lit('m0','lit-m',2000);return travel(MT,[P.app,P.sf],420,tk).then(function(){
-      return travel(MT,toMeta(0),620,tk);});});
-    st(1,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-k',2600);});return sleep(600);});
-    st(2,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',1800);});return sleep(700);});
-    st(3,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
-      if(e){e.classList.remove('lit-k','lit-d');e.classList.add('dead');}});return sleep(900);});
-    st(4,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
-      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1200);}});
-      return sleep(900);},700);
+    st(0,function(){lit('sfused','lit-m',1500);return travel(MT,[P.app,P.sf],440,tk);});
+    st(1,function(){lit('mship','lit-m',1600);return travel(MT,[P.sf,P.ms],420,tk,5);});
+    st(2,function(){lit('m0','lit-m',2400);return travel(MT,toM(0),580,tk);});
+    st(3,function(){lit('g0','lit-k',2200);return sleep(500);});
+    st(4,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',2600);});
+      badge.style.opacity=1;return travel(OK,[P.sf,P.app],440,tk);});
+    st(5,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-d');e.classList.add('lit-k');}});return sleep(800);});
+    st(6,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k');e.classList.add('dead');}});return sleep(950);});
+    st(7,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');
+      setTimeout(function(){e.classList.remove('lit-o');},1200);}});return sleep(950);},700);
   }
-  seq.then(function(){ if(tk===token){ return sleep(1100).then(function(){ if(tk===token) run(k,tk); }); } });
+  seq.then(function(){if(tk===token){return sleep(1200).then(function(){if(tk===token)run(k,tk);});}});
 }
-function select(k){ cur=k; token++; var tk=token;
+function select(k){token++;var tk=token;
   document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
-  exp.innerHTML=EXP[k]; run(k,tk); }
+  exp.innerHTML=EXP[k];run(k,tk);}
 document.querySelectorAll('.sc').forEach(function(b){
   b.addEventListener('click',function(){select(b.dataset.s);});});
-play.addEventListener('click',function(){ paused=!paused;
+play.addEventListener('click',function(){paused=!paused;
   play.innerHTML=paused?'&#9654; play':'&#9208; pause';});
+document.addEventListener('visibilitychange',function(){if(document.hidden){paused=true;
+  play.innerHTML='&#9654; play';}});
 var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-if(reduced){ play.style.display='none'; cap.textContent='Animation disabled (reduced motion). Sequence described below.';
-  exp.innerHTML=EXP['mkdir']; }
-else { select('mkdir'); }
+if(reduced){play.style.display='none';cap.textContent='Animation disabled (reduced motion). Detailed sequences below.';exp.innerHTML=EXP['mkdir'];}
+else{select('mkdir');}
 })();
 <\/script>
 </body></html>`;
@@ -8165,119 +8184,124 @@ var JOURNEY_HTML_SOFS_FR=`<!DOCTYPE html>
 <title>Anatomie d'une opération SOFS</title>
 <style>
 :root{--bg:#0f1117;--panel:#1a1f2e;--line:#2d3346;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;
---acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e}
+--acc:#f26522;--meta:#a78bfa;--data:#38bdf8;--main:#f59e0b;--ok:#22c55e;
+--mono:ui-monospace,Menlo,Consolas,monospace}
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:22px;line-height:1.55}
 .kicker{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--t3)}
 h1{font-size:26px;font-weight:800;margin:6px 0 8px}
 h1 em{color:var(--acc);font-style:normal}
-.lede{color:var(--t2);font-size:14px;max-width:70ch}
+.lede{color:var(--t2);font-size:14px;max-width:74ch}
 .ctrl{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:20px 0 12px}
-.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;
-cursor:pointer;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .15s}
+.sc{background:var(--panel);border:1px solid var(--line);color:var(--t2);padding:7px 14px;border-radius:7px;
+cursor:pointer;font-size:12.5px;font-family:var(--mono);transition:all .15s}
 .sc:hover{color:var(--t1);border-color:var(--t3)}
 .sc.on{background:rgba(242,101,34,.14);border-color:var(--acc);color:var(--acc);font-weight:700}
-#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:7px 13px;border-radius:7px;cursor:pointer;font-size:12px}
-.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+#play{margin-left:auto;background:none;border:1px solid var(--line);color:var(--t2);padding:6px 14px;border-radius:99px;cursor:pointer;font-size:11px;font-family:var(--mono)}
+.stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 12px 0}
 svg{width:100%;height:auto;display:block}
-.box{fill:none;stroke:var(--line);stroke-width:1.5;rx:9}
-.blabel{fill:var(--t2);font-size:12px;font-weight:700}
-.bsub{fill:var(--t3);font-size:10px}
-.node{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
-.node.lit-m{fill:rgba(167,139,250,.35);stroke:var(--meta)}
-.node.lit-d{fill:rgba(56,189,248,.35);stroke:var(--data)}
-.node.lit-k{fill:rgba(245,158,11,.35);stroke:var(--main)}
-.node.lit-o{fill:rgba(34,197,94,.35);stroke:var(--ok)}
-.node.dead{fill:#15181f;stroke:#22262f}
-.ntext{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
-.nsub{fill:var(--t3);font-size:9.5px;pointer-events:none}
-.link{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 4;fill:none}
-.cap{margin:12px 2px 0;font-size:13.5px;color:var(--t1);min-height:2.6em}
-.cap b{color:var(--acc)}
+.fedge{stroke:var(--line);stroke-width:1.4;stroke-dasharray:4 5}
+.fnode{fill:#242938;stroke:var(--line);stroke-width:1.5;transition:fill .25s,stroke .25s}
+.fnode.lit-m{fill:rgba(167,139,250,.32);stroke:var(--meta)}
+.fnode.lit-d{fill:rgba(56,189,248,.32);stroke:var(--data)}
+.fnode.lit-k{fill:rgba(245,158,11,.32);stroke:var(--main)}
+.fnode.lit-o{fill:rgba(34,197,94,.32);stroke:var(--ok)}
+.fnode.dead{fill:#15181f;stroke:#22262f}
+.flabel{fill:var(--t1);font-size:12px;font-weight:700;pointer-events:none}
+.flabel.s{fill:var(--t3);font-size:9.5px;font-weight:500;font-family:var(--mono)}
+.lane{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.22em}
+#okbadge{font-family:var(--mono);font-size:11.5px;font-weight:600;fill:var(--ok);opacity:0;transition:opacity .3s}
+.fcap{display:flex;align-items:center;gap:14px;padding:12px 2px;border-top:1px dashed var(--line);margin-top:10px}
+.fcap .txt{font-size:13.5px;color:var(--t2);min-height:24px;flex:1}
+.fcap .txt b{color:var(--t1)}
 .legend{display:flex;flex-wrap:wrap;gap:16px;margin:12px 2px 0;font-size:11.5px;color:var(--t3)}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
 .seen{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--acc);
-border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:78ch}
+border-radius:8px;padding:14px 16px;margin-top:18px;font-size:13.5px;color:var(--t2);max-width:80ch}
 .seen h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:7px}
 .seen b{color:var(--t1)}
-code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data)}
-.fb{display:none;margin-top:16px;font-size:13px;color:var(--t2)}
-.fb li{margin:7px 0 7px 18px}
+code{background:#0a0d14;padding:1px 5px;border-radius:4px;font-size:12px;color:var(--data);font-family:var(--mono)}
+.fb{display:none;margin-top:16px;font-size:12.5px;color:var(--t2)}
+.fb li{margin:8px 0 8px 18px}
 @media (prefers-reduced-motion: reduce){.fb{display:block}}
 </style></head>
 <body>
 <div class="kicker">Onboarding · internals du stockage distribué</div>
 <h1>Anatomie d'une opération <em>SOFS</em></h1>
-<p class="lede">Six appels POSIX, une seule infrastructure. Choisissez un appel et regardez ce qui s'allume — et surtout ce qui reste éteint.</p>
+<p class="lede">Six appels POSIX, une seule infrastructure. Choisissez un appel et suivez ce qui s'allume — et surtout ce qui reste éteint.</p>
 
-<div class="ctrl"><button class="sc on" data-s="mkdir">mkdir</button><button class="sc" data-s="write">écriture</button><button class="sc" data-s="ls">ls -l</button><button class="sc" data-s="read">lecture</button><button class="sc" data-s="partial">écriture partielle</button><button class="sc" data-s="rm">rm</button><button id="play">&#9208; pause</button></div>
+<div class="ctrl"><button class="sc on" data-s="mkdir">mkdir</button><button class="sc" data-s="write">write</button><button class="sc" data-s="ls">ls -l</button><button class="sc" data-s="read">read</button><button class="sc" data-s="partial">write partiel</button><button class="sc" data-s="rm">rm</button><button id="play">&#9208; pause</button></div>
 
 <div class="stage">
-<svg id="map" viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomie d'une opération SOFS">
-  <path class="link" d="M150 200 H260"/>
-  <path class="link" d="M370 180 C440 120 470 90 545 82"/>
-  <path class="link" d="M370 220 C440 250 470 260 570 265"/>
-  <rect class="box" x="520" y="35" width="300" height="95" rx="9"/>
-  <text class="blabel" x="534" y="57">RING META — MESA</text>
-  <text class="bsub" x="534" y="73">répertoires + inodes · CoS 4+ · SSD</text>
-  <rect class="box" x="520" y="165" width="380" height="205" rx="9"/>
-  <text class="blabel" x="534" y="188">RING DATA</text>
-  <text class="bsub" x="534" y="204">main chunk · pages b-tree · stripes de 128 Ko</text>
-  <rect class="node" id="app" x="40" y="172" width="110" height="56" rx="8"/>
-  <text class="ntext" x="95" y="196" text-anchor="middle">Application</text>
-  <text class="nsub" x="95" y="212" text-anchor="middle">POSIX</text>
-  <rect class="node" id="sfused" x="260" y="172" width="110" height="56" rx="8"/>
-  <text class="ntext" x="315" y="196" text-anchor="middle">sfused</text>
-  <text class="nsub" x="315" y="212" text-anchor="middle">daemon SOFS</text>
+<svg id="map" viewBox="0 0 1000 386" xmlns="http://www.w3.org/2000/svg" aria-label="Anatomie d'une opération SOFS">
+  <line class="fedge" x1="150" y1="196" x2="228" y2="196"/>
+  <line class="fedge" x1="352" y1="176" x2="470" y2="104"/>
+  <line class="fedge" x1="352" y1="216" x2="470" y2="268"/>
+  <line class="fedge" x1="290" y1="228" x2="290" y2="286"/>
+  <text class="lane" x="712" y="40" text-anchor="middle" fill="#a78bfa">METADONNEES</text>
+  <g id="mesa"></g>
+  <text class="flabel s" x="712" y="140" text-anchor="middle">MESA — repertoires + inodes · RING META · CoS 4+ · SSD</text>
+  <text class="lane" x="712" y="186" text-anchor="middle" fill="#38bdf8">DONNEES</text>
   <g id="grid"></g>
+  <text class="flabel s" x="712" y="368" text-anchor="middle">bizstorenode ×15 — main_cos 4 · page_cos 2 · stripe_cos 2</text>
+  <rect class="fnode" id="app" x="40" y="168" width="110" height="56" rx="9"/>
+  <text class="flabel" x="95" y="192" text-anchor="middle">application</text>
+  <text class="flabel s" id="calltxt" x="95" y="208" text-anchor="middle">mkdir()</text>
+  <text id="okbadge" x="95" y="156" text-anchor="middle">0</text>
+  <rect class="fnode" id="sfused" x="228" y="168" width="124" height="56" rx="9"/>
+  <text class="flabel" x="290" y="192" text-anchor="middle">sfused</text>
+  <text class="flabel s" x="290" y="208" text-anchor="middle">sfused.conf · ino_mode</text>
+  <rect class="fnode" id="mship" x="232" y="286" width="116" height="46" rx="9"/>
+  <text class="flabel" x="290" y="305" text-anchor="middle">membershipd</text>
+  <text class="flabel s" x="290" y="320" text-anchor="middle">ZooKeeper · DLM</text>
 </svg>
+<div class="fcap"><div class="txt" id="cap"></div></div>
 </div>
 
-<p class="cap" id="cap"></p>
 <div class="legend">
-  <span><i style="background:var(--meta)"></i>métadonnées MESA</span>
+  <span><i style="background:var(--meta)"></i>metadonnees MESA</span>
   <span><i style="background:var(--data)"></i>stripe de contenu</span>
   <span><i style="background:var(--main)"></i>main chunk / page b-tree</span>
-  <span><i style="background:var(--ok)"></i>commit / acquittement</span>
+  <span><i style="background:var(--ok)"></i>commit / retour</span>
 </div>
 
 <div class="seen"><h3>Ce que vous venez de voir</h3><div id="exp"></div></div>
-<ul class="fb"><li><i>Animation désactivée (mouvement réduit). Séquence décrite ci-dessous.</i></li><li><b>mkdir</b> — L'appel entre dans sfused · Transaction MESA : création de l'inode du répertoire · Ajout de l'entrée dans le répertoire parent · Commit — ou rollback intégral</li><li><b>écriture</b> — Le contenu arrive dans sfused · Choix du mode d'inode par motif sur le nom · Le main chunk part en CoS 4 · Le contenu est découpé en stripes de 128 Ko · Chaque stripe franchit le seuil de 60 000 octets et part en ARC · Les pages b-tree indexent les stripes · L'index est validé dans MESA</li><li><b>ls -l</b> — L'appel entre dans sfused · Lecture de l'inode et du répertoire dans MESA · Taille, droits, horodatages : tout est là · Réponse à l'application</li><li><b>lecture</b> — Lecture de l'inode dans MESA · Parcours des pages b-tree · Identification des seules stripes couvrant la plage · GET sur ces stripes uniquement · Assemblage et réponse</li><li><b>écriture partielle</b> — Écriture de 4 Ko au milieu d'un fichier de 10 Go · MESA localise les stripes concernées · Deux stripes sont réécrites · L'index est mis à jour</li><li><b>rm</b> — Transaction MESA : l'entrée et l'inode disparaissent · Les chunks sont marqués supprimés · GC — les listes de suppression partent en asynchrone · Purge — désallocation après 7 jours de rétention · Relocation — l'espace disque est enfin rendu</li></ul>
+<ul class="fb"><li><i>Animation desactivee (mouvement reduit). Sequences detaillees ci-dessous.</i></li><li><b>mkdir</b> — ① l'appel entre dans sfused, le parent est resolu dans <b>cache_md</b> ② ouverture d'une <b>transaction MESA</b> ③ allocation de l'inode du repertoire — mode fixe par <b>directory_ino_mode</b> ④ insertion de l'entree dans l'inode du repertoire parent ⑤ <b>commit</b> — ou rollback integral, jamais d'etat intermediaire ⑥ retour <b>0</b> — aucun octet ecrit dans le RING DATA</li><li><b>write</b> — ① <b>open()</b> : le nom est confronte aux motifs des ino_mode, du mode 1 au mode 7 ② premier motif qui correspond : l'inode est alloue, son mode est <b>grave dans son numero</b> ③ le <b>main chunk</b> part en main_cos 4, soit 5 copies ④ le contenu est decoupe en stripes de <b>131 072 octets</b> (stripe_size) ⑤ chaque stripe depasse <b>replication_size_threshold</b> (60 000 o) : elle part en ARC ⑥ les stripes se dispersent sur les bizstorenode du RING DATA ⑦ les <b>pages b-tree</b> (page_cos 2) indexent les stripes ⑧ l'index est <b>commite dans MESA</b> ⑨ <b>close()</b> : fsync_on_close vaut 1, la synchronisation est forcee</li><li><b>ls -l</b> — ① <b>readdir()</b> sur le repertoire ② lecture des entrees dans <b>MESA</b>, servies par cache_md ③ un <b>stat</b> par entree : taille, droits, horodatages ④ <b>aucune requete</b> vers le RING DATA — la grille reste eteinte ⑤ la liste remonte a l'application</li><li><b>read</b> — ① <b>open()</b> puis lseek : rien n'est encore lu ② lecture de l'<b>inode</b> dans MESA ③ parcours des <b>pages b-tree</b> pour la plage demandee ④ seules les stripes <b>couvrant la plage</b> sont identifiees ⑤ GET sur ces stripes uniquement — 3 nœuds sur 15 ⑥ avec un cache de type <b>stripe</b>, on peut meme ne lire que des portions ⑦ assemblage, puis retour des octets demandes</li><li><b>write partiel</b> — ① <b>lseek()</b> au milieu d'un fichier de 10 Gio ② MESA localise les <b>stripes concernees</b> via les pages b-tree ③ lecture-modification-ecriture des seules stripes touchees ④ <b>2 stripes</b> reecrites — le reste du fichier ne bouge pas ⑤ mise a jour de l'index si les bornes ont change ⑥ <b>commit MESA</b>, retour 0 ⑦ en S3 le meme geste reecrirait <b>l'objet entier</b> : il est immuable</li><li><b>rm</b> — ① <b>unlink()</b> : controle des droits sur le parent ② si la <b>Recycle</b> est active, le fichier part dans .recycle et s'arrete la ③ sinon transaction MESA : l'entree et l'inode disparaissent ④ <b>fast_delete</b> : un fichier sans stripe se reduit a son main chunk ⑤ les chunks sont <b>marques supprimes</b> — les octets sont toujours la ⑥ <b>GC</b> : les listes de suppression partent en asynchrone ⑦ <b>Purge</b> : desallocation apres 7 jours de retention ⑧ <b>Relocation</b> : les fichiers DAT sont reecrits, l'espace est rendu</li></ul>
 
 <script>
 (function(){
 var NS='http://www.w3.org/2000/svg';
-var svg=document.getElementById('map'), grid=document.getElementById('grid');
+var svg=document.getElementById('map'), grid=document.getElementById('grid'), mesa=document.getElementById('mesa');
 var cap=document.getElementById('cap'), exp=document.getElementById('exp'), play=document.getElementById('play');
-var paused=false, token=0, cur='mkdir';
-var M=[[560,82],[620,82],[680,82],[740,82]];
-var G=[];
-var cols=[570,640,710,780,850], rows=[240,290,340];
-for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+var badge=document.getElementById('okbadge'), calltxt=document.getElementById('calltxt');
+var paused=false, token=0;
+var M=[], G=[];
+var mx=[600,660,720,780,840];
+for(var i=0;i<mx.length;i++){
   var n=document.createElementNS(NS,'rect');
-  n.setAttribute('x',cols[c]-16); n.setAttribute('y',rows[r]-13);
-  n.setAttribute('width',32); n.setAttribute('height',26); n.setAttribute('rx',5);
-  n.setAttribute('class','node'); n.setAttribute('id','g'+G.length);
-  grid.appendChild(n); G.push([cols[c],rows[r]]);
-}}
-for(var i=0;i<M.length;i++){
-  var m=document.createElementNS(NS,'rect');
-  m.setAttribute('x',M[i][0]-16); m.setAttribute('y',M[i][1]-13);
-  m.setAttribute('width',32); m.setAttribute('height',26); m.setAttribute('rx',5);
-  m.setAttribute('class','node'); m.setAttribute('id','m'+i);
-  svg.insertBefore(m,grid); }
-var STEPS={'mkdir':["L'appel entre dans sfused","Transaction MESA : création de l'inode du répertoire","Ajout de l'entrée dans le répertoire parent","Commit — ou rollback intégral"],
-'write':["Le contenu arrive dans sfused","Choix du mode d'inode par motif sur le nom","Le main chunk part en CoS 4","Le contenu est découpé en stripes de 128 Ko","Chaque stripe franchit le seuil de 60 000 octets et part en ARC","Les pages b-tree indexent les stripes","L'index est validé dans MESA"],
-'ls':["L'appel entre dans sfused","Lecture de l'inode et du répertoire dans MESA","Taille, droits, horodatages : tout est là","Réponse à l'application"],
-'read':["Lecture de l'inode dans MESA","Parcours des pages b-tree","Identification des seules stripes couvrant la plage","GET sur ces stripes uniquement","Assemblage et réponse"],
-'partial':["Écriture de 4 Ko au milieu d'un fichier de 10 Go","MESA localise les stripes concernées","Deux stripes sont réécrites","L'index est mis à jour"],
-'rm':["Transaction MESA : l'entrée et l'inode disparaissent","Les chunks sont marqués supprimés","GC — les listes de suppression partent en asynchrone","Purge — désallocation après 7 jours de rétention","Relocation — l'espace disque est enfin rendu"]};
-var EXP={'mkdir':"<b>Le RING DATA est resté noir.</b> Créer un répertoire ne stocke aucun octet : c'est une transaction MESA, atomique de bout en bout. C'est cette atomicité qui garantit qu'un répertoire n'existe jamais à moitié, même quand plusieurs connectors écrivent dans la même arborescence.",
-'write':"Un fichier n'est pas un objet unique : <b>main chunk</b> (CoS 4), <b>pages b-tree</b> qui l'indexent (CoS 2) et <b>stripes</b> de 131 072 octets (CoS 2). Une stripe dépasse <code>replication_size_threshold</code>, donc elle part en erasure coding ; les pages, minuscules, restent répliquées. Les deux destinations travaillent en parallèle.",
-'ls':"<b>Zéro requête vers le RING DATA.</b> C'est la raison d'être des SSD dédiés aux métadonnées : un <code>ls -R</code> sur un gros volume est un déluge de petites lectures aléatoires, exactement ce qu'un disque mécanique fait mal.",
-'read':"Trois nœuds s'allument sur douze. Les pages b-tree servent à ne demander <b>que</b> les stripes utiles. Avec un cache de type <code>stripe</code>, on descend encore d'un cran : lire des portions de stripes plutôt que des stripes entières.",
-'partial':"<b>Le point qui sépare le fichier de l'objet.</b> Deux stripes bougent, le reste du fichier ne bouge pas. En S3, l'objet est immuable : le même geste réécrit les 10 Go. C'est aussi pourquoi NFS sur S3 ne supporte pas les mises à jour partielles.",
-'rm':"La réponse à l'application est immédiate, la libération ne l'est pas. Trois tâches distinctes s'enchaînent, et c'est la <b>Relocation</b> qui rend réellement l'espace en réécrivant les fichiers DAT — ni le GC, ni la Purge. Pendant la rétention, un Undelete reste possible."};
+  n.setAttribute('x',mx[i]-22);n.setAttribute('y',88);n.setAttribute('width',44);n.setAttribute('height',30);
+  n.setAttribute('rx',6);n.setAttribute('class','fnode');n.setAttribute('id','m'+i);
+  mesa.appendChild(n);M.push([mx[i],103]);}
+var cols=[560,626,692,758,824], rows=[218,268,318];
+for(var r=0;r<rows.length;r++){for(var c=0;c<cols.length;c++){
+  var g=document.createElementNS(NS,'rect');
+  g.setAttribute('x',cols[c]-21);g.setAttribute('y',rows[r]-14);g.setAttribute('width',42);g.setAttribute('height',28);
+  g.setAttribute('rx',6);g.setAttribute('class','fnode');g.setAttribute('id','g'+G.length);
+  grid.appendChild(g);G.push([cols[c],rows[r]]);}}
+var STEPS={'mkdir':["① l'appel entre dans sfused, le parent est resolu dans <b>cache_md</b>","② ouverture d'une <b>transaction MESA</b>","③ allocation de l'inode du repertoire — mode fixe par <b>directory_ino_mode</b>","④ insertion de l'entree dans l'inode du repertoire parent","⑤ <b>commit</b> — ou rollback integral, jamais d'etat intermediaire","⑥ retour <b>0</b> — aucun octet ecrit dans le RING DATA"],
+'write':["① <b>open()</b> : le nom est confronte aux motifs des ino_mode, du mode 1 au mode 7","② premier motif qui correspond : l'inode est alloue, son mode est <b>grave dans son numero</b>","③ le <b>main chunk</b> part en main_cos 4, soit 5 copies","④ le contenu est decoupe en stripes de <b>131 072 octets</b> (stripe_size)","⑤ chaque stripe depasse <b>replication_size_threshold</b> (60 000 o) : elle part en ARC","⑥ les stripes se dispersent sur les bizstorenode du RING DATA","⑦ les <b>pages b-tree</b> (page_cos 2) indexent les stripes","⑧ l'index est <b>commite dans MESA</b>","⑨ <b>close()</b> : fsync_on_close vaut 1, la synchronisation est forcee"],
+'ls':["① <b>readdir()</b> sur le repertoire","② lecture des entrees dans <b>MESA</b>, servies par cache_md","③ un <b>stat</b> par entree : taille, droits, horodatages","④ <b>aucune requete</b> vers le RING DATA — la grille reste eteinte","⑤ la liste remonte a l'application"],
+'read':["① <b>open()</b> puis lseek : rien n'est encore lu","② lecture de l'<b>inode</b> dans MESA","③ parcours des <b>pages b-tree</b> pour la plage demandee","④ seules les stripes <b>couvrant la plage</b> sont identifiees","⑤ GET sur ces stripes uniquement — 3 nœuds sur 15","⑥ avec un cache de type <b>stripe</b>, on peut meme ne lire que des portions","⑦ assemblage, puis retour des octets demandes"],
+'partial':["① <b>lseek()</b> au milieu d'un fichier de 10 Gio","② MESA localise les <b>stripes concernees</b> via les pages b-tree","③ lecture-modification-ecriture des seules stripes touchees","④ <b>2 stripes</b> reecrites — le reste du fichier ne bouge pas","⑤ mise a jour de l'index si les bornes ont change","⑥ <b>commit MESA</b>, retour 0","⑦ en S3 le meme geste reecrirait <b>l'objet entier</b> : il est immuable"],
+'rm':["① <b>unlink()</b> : controle des droits sur le parent","② si la <b>Recycle</b> est active, le fichier part dans .recycle et s'arrete la","③ sinon transaction MESA : l'entree et l'inode disparaissent","④ <b>fast_delete</b> : un fichier sans stripe se reduit a son main chunk","⑤ les chunks sont <b>marques supprimes</b> — les octets sont toujours la","⑥ <b>GC</b> : les listes de suppression partent en asynchrone","⑦ <b>Purge</b> : desallocation apres 7 jours de retention","⑧ <b>Relocation</b> : les fichiers DAT sont reecrits, l'espace est rendu"]};
+var EXP={'mkdir':"<b>Le RING DATA est reste noir.</b> Creer un repertoire ne stocke aucun octet : c'est une transaction MESA, atomique de bout en bout. Cette atomicite est ce qui autorise plusieurs connectors a ecrire dans la meme arborescence sans se marcher dessus.",
+'write':"Un fichier n'est pas un objet unique : un <b>main chunk</b> (CoS 4), des <b>pages b-tree</b> qui l'indexent (CoS 2) et des <b>stripes</b> de 128 Kio (CoS 2). Trois natures d'objets, trois Class of Service, et deux destinations qui travaillent en parallele — MESA pour l'index, le RING DATA pour le contenu.",
+'ls':"<b>Zero requete vers le RING DATA.</b> C'est la raison d'etre des SSD dedies aux metadonnees : un <code>ls -R</code> sur un gros volume est un deluge de petites lectures aleatoires, exactement ce qu'un disque mecanique fait mal.",
+'read':"Trois nœuds s'allument sur quinze. Les pages b-tree existent pour ne demander <b>que</b> les stripes utiles ; le cache de type <code>stripe</code> descend encore d'un cran en lisant des portions de stripes.",
+'partial':"<b>Le point qui separe le fichier de l'objet.</b> Deux stripes bougent, le reste du fichier est intact. En S3, l'objet est immuable : le meme geste reecrit les 10 Gio. C'est aussi pourquoi NFS sur S3 refuse les mises a jour partielles.",
+'rm':"La reponse a l'application est immediate, la liberation ne l'est pas. Trois taches s'enchainent, et c'est la <b>Relocation</b> qui rend reellement l'espace en reecrivant les fichiers DAT — ni le GC, ni la Purge. Pendant la retention, un Undelete reste possible."};
+var CALL={'mkdir':'mkdir()','write':'write() 1 GiB','ls':'readdir()','read':'pread() 40 KiB','partial':'pwrite() 4 KiB','rm':'unlink()'};
+var RET={'mkdir':'0','write':'0 · fsync','ls':'liste','read':'40 KiB','partial':'0','rm':'0'};
 function dot(color,r){var c=document.createElementNS(NS,'circle');c.setAttribute('r',r||6.5);
   c.setAttribute('fill',color);c.setAttribute('opacity','.95');svg.appendChild(c);return c;}
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
@@ -8291,84 +8315,98 @@ function tween(el,a,b,dur,tk){return new Promise(function(res){var t0=0;
     if(p<1)requestAnimationFrame(fr); else res(); }
   requestAnimationFrame(fr);});}
 function travel(color,pts,dur,tk,r){var d=dot(color,r);d.setAttribute('cx',pts[0][0]);d.setAttribute('cy',pts[0][1]);
-  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve(); }
-    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();}); }
+  var i=1; function nxt(){ if(i>=pts.length||tk!==token){try{d.remove();}catch(e){} return Promise.resolve();}
+    return idle().then(function(){return tween(d,pts[i-1],pts[i],dur,tk);}).then(function(){i++;return nxt();});}
   return nxt();}
-function lit(id,cls,ms){var el=document.getElementById(id); if(!el)return;
-  el.classList.add(cls); if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
-function clear(){svg.querySelectorAll('.node').forEach(function(n){
-  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});}
-function say(k,i){cap.innerHTML='<b>'+(i+1)+'.</b> '+STEPS[k][i];}
-var P={app:[95,200], sf:[315,200]};
-function toMeta(i){return [P.sf,[440,140],M[i]];}
-function toData(i){return [P.sf,[470,250],G[i]];}
-function fromData(i){return [G[i],[470,250],P.sf];}
+function lit(id,cls,ms){var el=document.getElementById(id);if(!el)return;
+  el.classList.add(cls);if(ms)setTimeout(function(){el.classList.remove(cls);},ms);}
+function clear(){svg.querySelectorAll('.fnode').forEach(function(n){
+  n.classList.remove('lit-m','lit-d','lit-k','lit-o','dead');});badge.style.opacity=0;}
+var P={app:[95,196], sf:[290,196], ms:[290,309]};
+function toM(i){return [P.sf,[460,140],M[i]];}
+function toG(i){return [P.sf,[470,250],G[i]];}
+function fromG(i){return [G[i],[470,250],P.sf];}
 function run(k,tk){
-  clear();
+  clear(); calltxt.textContent=CALL[k]; badge.textContent=RET[k];
   var seq=Promise.resolve();
   function st(i,f,hold){ seq=seq.then(function(){ if(tk!==token)return;
-    say(k,i); return f().then(function(){ return sleep(hold||260); }); }); }
+    cap.innerHTML=STEPS[k][i]; return f().then(function(){return sleep(hold||240);});});}
   var D=css('--data'), MT=css('--meta'), MN=css('--main'), OK=css('--ok');
   if(k==='mkdir'){
-    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toMeta(0),700,tk);});
-    st(2,function(){lit('m1','lit-m',2000);return travel(MT,toMeta(1),700,tk);});
-    st(3,function(){lit('m0','lit-o',1400);lit('m1','lit-o',1400);return sleep(700);},600);
+    st(0,function(){lit('sfused','lit-m',1600);return travel(MT,[P.app,P.sf],480,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toM(0),620,tk);});
+    st(2,function(){lit('m1','lit-m',2400);return travel(MT,toM(1),580,tk);});
+    st(3,function(){lit('m2','lit-m',2200);return travel(MT,toM(2),560,tk);});
+    st(4,function(){[0,1,2].forEach(function(i){lit('m'+i,'lit-o',1400);});return sleep(650);});
+    st(5,function(){badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);},800);
   } else if(k==='write'){
-    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('sfused','lit-k',900);return sleep(500);});
-    st(2,function(){lit('g0','lit-k',3600);return travel(MN,toData(0),650,tk,7.5);});
+    st(0,function(){lit('sfused','lit-k',1800);return travel(D,[P.app,P.sf],480,tk);});
+    st(1,function(){lit('m0','lit-m',2200);return travel(MT,toM(0),560,tk);});
+    st(2,function(){lit('g0','lit-k',4200);return travel(MN,toG(0),620,tk,7.5);});
     st(3,function(){return sleep(300);});
-    st(4,function(){var a=[];[3,4,6,8,9,11,12,14].forEach(function(g,n){
-        lit('g'+g,'lit-d',3200); a.push(sleep(n*90).then(function(){return travel(D,toData(g),620,tk,5.5);}));});
-      return Promise.all(a);},400);
-    st(5,function(){lit('g1','lit-k',2200);lit('g2','lit-k',2200);
-      return Promise.all([travel(MN,toData(1),600,tk,5),travel(MN,toData(2),600,tk,5)]);});
-    st(6,function(){lit('m0','lit-m',1800);lit('m0','lit-o',1800);return travel(MT,toMeta(0),650,tk);},600);
+    st(4,function(){return sleep(300);});
+    st(5,function(){return Promise.all([3,4,6,7,9,11,12,14].map(function(g,n){lit('g'+g,'lit-d',3600);
+      return sleep(n*80).then(function(){return travel(D,toG(g),600,tk,5.5);});}));},350);
+    st(6,function(){[1,2].forEach(function(g){lit('g'+g,'lit-k',2400);});
+      return Promise.all([1,2].map(function(g){return travel(MN,toG(g),580,tk,5);}));});
+    st(7,function(){lit('m1','lit-m',2000);lit('m1','lit-o',2000);return travel(MT,toM(1),580,tk);});
+    st(8,function(){badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);},800);
   } else if(k==='ls'){
-    st(0,function(){return travel(MT,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2400);lit('m1','lit-m',2400);return travel(MT,toMeta(0),650,tk);});
-    st(2,function(){return sleep(420);});
-    st(3,function(){return travel(OK,[M[0],[440,140],P.sf,P.app],900,tk);},600);
+    st(0,function(){lit('sfused','lit-m',1500);return travel(MT,[P.app,P.sf],460,tk);});
+    st(1,function(){lit('m0','lit-m',2600);lit('m1','lit-m',2600);
+      return Promise.all([0,1].map(function(i){return travel(MT,toM(i),580,tk);}));});
+    st(2,function(){lit('m2','lit-m',2000);return travel(MT,toM(2),540,tk);});
+    st(3,function(){return sleep(500);});
+    st(4,function(){badge.style.opacity=1;return travel(OK,[M[0],[460,140],P.sf,P.app],820,tk);},800);
   } else if(k==='read'){
-    st(0,function(){lit('m0','lit-m',2600);return travel(MT,[P.app,P.sf],420,tk).then(function(){
-      return travel(MT,toMeta(0),620,tk);});});
-    st(1,function(){lit('m1','lit-m',2200);return travel(MT,toMeta(1),560,tk);});
-    st(2,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3000);});return sleep(420);});
-    st(3,function(){return Promise.all([4,9,13].map(function(g,n){
-      return sleep(n*120).then(function(){return travel(D,fromData(g),650,tk,5.5);});}));});
-    st(4,function(){return travel(OK,[P.sf,P.app],520,tk);},600);
+    st(0,function(){lit('sfused','lit-d',1400);return travel(MT,[P.app,P.sf],440,tk);});
+    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toM(0),580,tk);});
+    st(2,function(){lit('m1','lit-m',2400);return travel(MT,toM(1),540,tk);});
+    st(3,function(){[4,9,13].forEach(function(g){lit('g'+g,'lit-d',3400);});return sleep(420);});
+    st(4,function(){return Promise.all([4,9,13].map(function(g,n){
+      return sleep(n*110).then(function(){return travel(D,fromG(g),600,tk,5.5);});}));});
+    st(5,function(){return sleep(360);});
+    st(6,function(){badge.style.opacity=1;return travel(D,[P.sf,P.app],480,tk);},800);
   } else if(k==='partial'){
-    st(0,function(){return travel(D,[P.app,P.sf],520,tk);});
-    st(1,function(){lit('m0','lit-m',2600);return travel(MT,toMeta(0),620,tk);});
-    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3000);});
-      return Promise.all([7,12].map(function(g,n){
-        return sleep(n*140).then(function(){return travel(D,toData(g),640,tk,6);});}));});
-    st(3,function(){lit('m0','lit-o',1600);return travel(OK,toMeta(0),600,tk);},700);
+    st(0,function(){lit('sfused','lit-d',1500);return travel(D,[P.app,P.sf],460,tk);});
+    st(1,function(){lit('m0','lit-m',2600);lit('m1','lit-m',2600);return travel(MT,toM(0),580,tk);});
+    st(2,function(){[7,12].forEach(function(g){lit('g'+g,'lit-d',3200);});
+      return Promise.all([7,12].map(function(g,n){return sleep(n*120).then(function(){
+        return travel(D,fromG(g),560,tk,5.5);});}));});
+    st(3,function(){return Promise.all([7,12].map(function(g,n){return sleep(n*120).then(function(){
+      return travel(D,toG(g),560,tk,6);});}));},300);
+    st(4,function(){lit('m1','lit-k',1800);return travel(MN,toM(1),540,tk,5);});
+    st(5,function(){lit('m0','lit-o',1500);badge.style.opacity=1;return travel(OK,[P.sf,P.app],460,tk);});
+    st(6,function(){return sleep(900);},700);
   } else if(k==='rm'){
-    st(0,function(){lit('m0','lit-m',2000);return travel(MT,[P.app,P.sf],420,tk).then(function(){
-      return travel(MT,toMeta(0),620,tk);});});
-    st(1,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-k',2600);});return sleep(600);});
-    st(2,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',1800);});return sleep(700);});
-    st(3,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
-      if(e){e.classList.remove('lit-k','lit-d');e.classList.add('dead');}});return sleep(900);});
-    st(4,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
-      if(e){e.classList.remove('dead');e.classList.add('lit-o');setTimeout(function(){e.classList.remove('lit-o');},1200);}});
-      return sleep(900);},700);
+    st(0,function(){lit('sfused','lit-m',1500);return travel(MT,[P.app,P.sf],440,tk);});
+    st(1,function(){lit('mship','lit-m',1600);return travel(MT,[P.sf,P.ms],420,tk,5);});
+    st(2,function(){lit('m0','lit-m',2400);return travel(MT,toM(0),580,tk);});
+    st(3,function(){lit('g0','lit-k',2200);return sleep(500);});
+    st(4,function(){[2,5,7,10,13].forEach(function(g){lit('g'+g,'lit-d',2600);});
+      badge.style.opacity=1;return travel(OK,[P.sf,P.app],440,tk);});
+    st(5,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-d');e.classList.add('lit-k');}});return sleep(800);});
+    st(6,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('lit-k');e.classList.add('dead');}});return sleep(950);});
+    st(7,function(){[2,5,7,10,13].forEach(function(g){var e=document.getElementById('g'+g);
+      if(e){e.classList.remove('dead');e.classList.add('lit-o');
+      setTimeout(function(){e.classList.remove('lit-o');},1200);}});return sleep(950);},700);
   }
-  seq.then(function(){ if(tk===token){ return sleep(1100).then(function(){ if(tk===token) run(k,tk); }); } });
+  seq.then(function(){if(tk===token){return sleep(1200).then(function(){if(tk===token)run(k,tk);});}});
 }
-function select(k){ cur=k; token++; var tk=token;
+function select(k){token++;var tk=token;
   document.querySelectorAll('.sc').forEach(function(b){b.classList.toggle('on',b.dataset.s===k);});
-  exp.innerHTML=EXP[k]; run(k,tk); }
+  exp.innerHTML=EXP[k];run(k,tk);}
 document.querySelectorAll('.sc').forEach(function(b){
   b.addEventListener('click',function(){select(b.dataset.s);});});
-play.addEventListener('click',function(){ paused=!paused;
+play.addEventListener('click',function(){paused=!paused;
   play.innerHTML=paused?'&#9654; lecture':'&#9208; pause';});
+document.addEventListener('visibilitychange',function(){if(document.hidden){paused=true;
+  play.innerHTML='&#9654; lecture';}});
 var reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-if(reduced){ play.style.display='none'; cap.textContent='Animation désactivée (mouvement réduit). Séquence décrite ci-dessous.';
-  exp.innerHTML=EXP['mkdir']; }
-else { select('mkdir'); }
+if(reduced){play.style.display='none';cap.textContent='Animation desactivee (mouvement reduit). Sequences detaillees ci-dessous.';exp.innerHTML=EXP['mkdir'];}
+else{select('mkdir');}
 })();
 <\/script>
 </body></html>`;
