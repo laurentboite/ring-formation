@@ -8600,7 +8600,7 @@ function renderQuiz(){
   var quiz=L(m.quiz,m.quiz_en||m.quiz);
   var answers=state.answers[m.id]||new Array(quiz.length).fill(-1);
   var locked=!!sc;
-  var html='<div class="quiz-hdr"><h2>Quiz &mdash; '+L(m.title,m.title_en||m.title)+'</h2><p>'+quiz.length+' questions &middot; '+L('Sélectionnez une réponse','Select one answer')+'</p></div>';
+  var html='<div class="quiz-hdr"><h2>Quiz &mdash; '+L(m.title,m.title_en||m.title)+'</h2><p>'+quiz.length+' questions &middot; '+L('Sélectionnez une réponse &middot; cliquez à nouveau pour la retirer','Select one answer &middot; click it again to clear it')+'</p></div>';
   var letters=['A','B','C','D'];
   quiz.forEach(function(q,qi){
     var sel=answers[qi];
@@ -8610,9 +8610,11 @@ function renderQuiz(){
     html+='<div class="opts">';
     q.opts.forEach(function(opt,oi){
       var cls='opt';
-      if(locked)cls+=' locked';
-      if(sel===oi){cls+=oi===q.ans?' correct':' wrong';}
-      else if(locked&&oi===q.ans){cls+=' correct';}
+      if(locked){
+        cls+=' locked';
+        if(sel===oi){cls+=oi===q.ans?' correct':' wrong';}
+        else if(oi===q.ans){cls+=' correct';}
+      }
       else if(sel===oi){cls+=' sel';}
       var click=locked?'':'onclick="selectOpt('+qi+','+oi+')"';
       html+='<div class="'+cls+'" '+click+'><span class="ol">'+letters[oi]+'</span><span>'+opt+'</span></div>';
@@ -8639,11 +8641,14 @@ function renderQuiz(){
 function selectOpt(qi,oi){
   var m=MODS[state.modIdx];
   if(!state.answers[m.id])state.answers[m.id]=new Array(m.quiz.length).fill(-1);
+  var card=document.getElementById('qcard'+qi);
+  if(!card)return;
+  var opts=card.querySelectorAll('.opts .opt');
   var prev=state.answers[m.id][qi];
-  if(prev!==-1){var p=document.getElementById('opt'+qi+'_'+prev);if(p)p.classList.remove('sel');}
+  for(var i=0;i<opts.length;i++){opts[i].classList.remove('sel');}
+  if(prev===oi){state.answers[m.id][qi]=-1;return;}
   state.answers[m.id][qi]=oi;
-  var el=document.querySelector('#qcard'+qi+' .opts .opt:nth-child('+(oi+1)+')');
-  if(el)el.classList.add('sel');
+  if(opts[oi])opts[oi].classList.add('sel');
 }
 
 function validateQuiz(){
@@ -8667,7 +8672,7 @@ function resetQuiz(){
 }
 
 var GLOSSARY=[
-  {term:'ARC',def:'Adaptive Ring Coding — schéma d\'erasure coding propriétaire Scality stockant des fragments de données sur plusieurs nœuds pour tolérer les pannes. Remplace la réplication classique avec une meilleure efficacité de stockage.',def_en:'Adaptive Ring Coding — Scality\'s proprietary erasure coding scheme that stores data fragments across multiple nodes to tolerate failures. Replaces classic replication with better storage efficiency.',refs:['02','04']},
+  {term:'ARC',def:'Advanced Resilience Configuration — système d\'erasure coding Scality qui augmente la tolérance aux pannes pour un coût de stockage inférieur à la réplication classique. Les données sont découpées en k fragments, m fragments de parité sont calculés, et n\'importe quels k des k+m fragments suffisent à reconstruire l\'objet.',def_en:'Advanced Resilience Configuration — Scality erasure coding system designed to increase failure tolerance at a storage cost lower than classic replication. Data is cut into k fragments, m parity fragments are computed, and any k of the k+m fragments are enough to rebuild the object.',refs:['02','04']},
   {term:'ARC_REBUILD_NOK',def:'Alarme indiquant qu\'un rebuild d\'objet en mode ARC a échoué. Le fragment corrompu ou manquant n\'a pas pu être reconstruit à partir des fragments survivants.',def_en:'Alarm indicating that an object rebuild in ARC mode has failed. The corrupted or missing fragment could not be reconstructed from the surviving fragments.',refs:['05']},
   {term:'AlertManager',def:'Composant Prometheus gérant le routage et la déduplication des alertes. Reçoit les alertes de Prometheus et les envoie vers les destinations configurées (email, PagerDuty, Slack).',def_en:'Prometheus component that handles alert routing and deduplication. Receives alerts from Prometheus and forwards them to configured destinations (email, PagerDuty, Slack).',refs:['05']},
   {term:'Backbeat',def:'Moteur de réplication asynchrone de Scality. Traite les tâches CRR, Lifecycle, Replication Metrics et autres workflows en arrière-plan via des queues Kafka.',def_en:'Scality\'s asynchronous replication engine. Processes CRR, Lifecycle, Replication Metrics, and other background workflows via Kafka queues.',refs:['14','16']},
